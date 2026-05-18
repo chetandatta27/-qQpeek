@@ -912,3 +912,667 @@ function ProfileScreen() {
     </div>
   );
 }
+
+/* ---------- shared atoms (new) ---------- */
+
+function ToolPill({ icon: Icon, label, onClick }: { icon: typeof Zap; label: string; onClick?: () => void }) {
+  return (
+    <button onClick={onClick} className="flex shrink-0 items-center gap-1.5 rounded-full bg-paper px-3.5 py-2 text-[12px] font-medium text-ink ql-ring active:bg-beige transition-colors">
+      <Icon className="h-3.5 w-3.5" /> {label}
+    </button>
+  );
+}
+
+function ScreenHeader({ title, right }: { title: string; right?: ReactNode }) {
+  const { back } = useNav();
+  return (
+    <div className="flex items-center justify-between px-5 pt-6">
+      <button onClick={back} className="grid h-10 w-10 place-items-center rounded-full bg-paper ql-ring active:bg-beige"><ArrowLeft className="h-4 w-4 text-ink" /></button>
+      <span className="text-[12px] font-semibold text-ink">{title}</span>
+      <div className="h-10 w-10">{right}</div>
+    </div>
+  );
+}
+
+function LiveDot({ tone = "busy" }: { tone?: "busy" | "live" | "free" }) {
+  const c = tone === "busy" ? "bg-q-busy-foreground" : tone === "live" ? "bg-q-live-foreground" : "bg-q-free-foreground";
+  return (
+    <span className="relative inline-flex h-2 w-2">
+      <span className={`absolute inset-0 animate-ping rounded-full ${c} opacity-60`} />
+      <span className={`relative h-2 w-2 rounded-full ${c}`} />
+    </span>
+  );
+}
+
+function Timestamp({ children }: { children: ReactNode }) {
+  return (
+    <span className="inline-flex items-center gap-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+      <span className="h-1 w-1 rounded-full bg-q-live-foreground" /> {children}
+    </span>
+  );
+}
+
+/* ---------- search ---------- */
+
+function SearchScreen() {
+  const { back, go } = useNav();
+  const [q, setQ] = useState("");
+  const [filter, setFilter] = useState("Nearest");
+  const filters = ["Nearest", "Lowest wait", "Least crowded", "Open now"];
+  const recents = ["Apollo Hospital", "Cult Fit Koramangala", "SBI 12th Main"];
+  const trending = [
+    { tone: "free" as const, name: "BMTC Kempegowda", meta: "Bus stand · 1.4 km", wait: "2 min", occ: 18 },
+    { tone: "medium" as const, name: "Blue Tokai · HSR", meta: "Café · 0.8 km", wait: "11 min", occ: 56 },
+    { tone: "busy" as const, name: "Manipal Hospital", meta: "Hospital · 3.1 km", wait: "52 min", occ: 88 },
+  ];
+
+  return (
+    <div className="relative flex h-full flex-col bg-paper">
+      <div className="px-5 pt-6">
+        <div className="flex items-center gap-3">
+          <button onClick={back} className="grid h-10 w-10 place-items-center rounded-full bg-beige active:bg-stone"><ArrowLeft className="h-4 w-4 text-ink" /></button>
+          <div className="flex flex-1 items-center gap-2 rounded-2xl bg-beige px-4 py-3 ql-ring">
+            <Search className="h-4 w-4 text-muted-foreground" />
+            <input
+              autoFocus
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Search places, queues, transit…"
+              className="w-full bg-transparent text-[13px] text-ink placeholder:text-muted-foreground focus:outline-none"
+            />
+            {q && <button onClick={() => setQ("")}><X className="h-4 w-4 text-muted-foreground" /></button>}
+          </div>
+        </div>
+
+        <div className="-mx-5 mt-4 overflow-hidden">
+          <div className="flex gap-2 overflow-x-auto px-5 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {filters.map((f) => (
+              <Pill key={f} active={filter === f} onClick={() => setFilter(f)}>{f}</Pill>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-4 flex-1 space-y-5 overflow-y-auto px-5 pb-10">
+        {!q && (
+          <div>
+            <div className="mb-2 flex items-center justify-between">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Recent</span>
+              <button className="text-[11px] font-medium text-muted-foreground">Clear</button>
+            </div>
+            <div className="space-y-2">
+              {recents.map((r) => (
+                <button key={r} onClick={() => setQ(r)} className="flex w-full items-center justify-between rounded-2xl bg-beige px-4 py-3 active:bg-stone">
+                  <div className="flex items-center gap-3">
+                    <History className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-[13px] font-medium text-ink">{r}</span>
+                  </div>
+                  <ArrowUpRight className="h-4 w-4 text-muted-foreground" />
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div>
+          <div className="mb-2 flex items-center justify-between">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{q ? "Results" : "Trending nearby"}</span>
+            <Timestamp>Updated 12 sec ago</Timestamp>
+          </div>
+          <div className="space-y-2">
+            {trending.map((t) => (
+              <button key={t.name} onClick={() => go("detail")} className="flex w-full items-center justify-between rounded-[20px] bg-paper p-3.5 ql-ring active:bg-beige">
+                <div className="min-w-0 flex-1">
+                  <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{t.meta}</div>
+                  <div className="mt-0.5 truncate text-[14px] font-semibold text-ink">{t.name}</div>
+                  <div className="mt-2 h-1 w-24 overflow-hidden rounded-full bg-ink/10">
+                    <div className={`h-full rounded-full ${t.tone === "free" ? "bg-q-free-foreground" : t.tone === "medium" ? "bg-q-medium-foreground" : "bg-q-busy-foreground"}`} style={{ width: `${t.occ}%` }} />
+                  </div>
+                </div>
+                <div className="ml-3 text-right">
+                  <div className="font-display text-[18px] font-semibold tracking-tight text-ink">{t.wait}</div>
+                  <div className={`mt-0.5 text-[10px] font-semibold uppercase tracking-wider ${t.tone === "free" ? "text-q-free-foreground" : t.tone === "medium" ? "text-q-medium-foreground" : "text-q-busy-foreground"}`}>{t.tone === "free" ? "Free" : t.tone === "medium" ? "Filling" : "Busy"}</div>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- compare ---------- */
+
+function CompareScreen() {
+  const a = { name: "Third Wave Coffee", meta: "Café · 0.4 km", wait: "9", occ: 56, trend: "up" as const, comfort: "8.1", tone: "medium" as const };
+  const b = { name: "Blue Tokai HSR", meta: "Café · 0.8 km", wait: "4", occ: 28, trend: "down" as const, comfort: "9.0", tone: "free" as const };
+
+  return (
+    <div className="relative flex h-full flex-col bg-beige">
+      <ScreenHeader title="Compare" right={<button className="grid h-10 w-10 place-items-center rounded-full bg-paper ql-ring"><Plus className="h-4 w-4 text-ink" /></button>} />
+
+      <div className="mt-2 flex-1 space-y-3 overflow-y-auto px-5 pb-10 pt-2">
+        <div className="grid grid-cols-2 gap-2">
+          {[a, b].map((p) => (
+            <div key={p.name} className={`rounded-[22px] p-4 ${p.tone === "free" ? "bg-q-free" : "bg-q-medium"}`}>
+              <div className={`text-[10px] font-semibold uppercase tracking-wider ${p.tone === "free" ? "text-q-free-foreground" : "text-q-medium-foreground"} opacity-70`}>{p.meta}</div>
+              <div className="mt-1 font-display text-[15px] font-semibold leading-tight tracking-tight text-ink">{p.name}</div>
+              <div className="mt-3 font-display text-[28px] font-semibold leading-none tracking-tight text-ink">{p.wait}<span className="ml-1 text-[12px] font-medium opacity-60">min</span></div>
+              <div className="mt-3 h-1 w-full overflow-hidden rounded-full bg-ink/10">
+                <div className={`ql-bar-anim h-full rounded-full ${p.tone === "free" ? "bg-q-free-foreground" : "bg-q-medium-foreground"}`} style={{ width: `${p.occ}%` }} />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <CompareRow label="Distance" left="0.4 km" right="0.8 km" winner="left" />
+        <CompareRow label="Live wait" left="9 min" right="4 min" winner="right" />
+        <CompareRow label="Occupancy" left="56%" right="28%" winner="right" />
+        <CompareRow label="Comfort score" left="8.1 / 10" right="9.0 / 10" winner="right" />
+
+        <div className="rounded-[22px] bg-paper p-4 ql-ring">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Prediction · next 1h</span>
+            <span className="text-[10px] font-medium text-muted-foreground">92% conf.</span>
+          </div>
+          <div className="mt-3 grid grid-cols-2 gap-3">
+            <div>
+              <div className="text-[11px] font-medium text-ink">{a.name}</div>
+              <div className="text-q-medium-foreground"><Sparkline /></div>
+            </div>
+            <div>
+              <div className="text-[11px] font-medium text-ink">{b.name}</div>
+              <div className="text-q-free-foreground"><Sparkline /></div>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-[22px] bg-ink p-4 text-paper">
+          <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wider opacity-60">
+            <Sparkles className="h-3 w-3" /> Recommendation
+          </div>
+          <p className="mt-2 text-[14px] font-medium leading-snug">Head to <span className="font-semibold">Blue Tokai HSR</span>. You'll save ~7 min including travel.</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CompareRow({ label, left, right, winner }: { label: string; left: string; right: string; winner: "left" | "right" }) {
+  return (
+    <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 rounded-2xl bg-paper px-4 py-3 ql-ring">
+      <div className={`text-left text-[14px] font-semibold ${winner === "left" ? "text-ink" : "text-muted-foreground"}`}>{left}</div>
+      <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</span>
+      <div className={`text-right text-[14px] font-semibold ${winner === "right" ? "text-ink" : "text-muted-foreground"}`}>{right}</div>
+    </div>
+  );
+}
+
+/* ---------- alert preferences ---------- */
+
+function AlertSettingsScreen() {
+  const [threshold, setThreshold] = useState(15);
+  const [prefs, setPrefs] = useState({
+    smart: true, transport: true, gym: false, ai: true, quiet: false,
+  });
+  const toggle = (k: keyof typeof prefs) => setPrefs((p) => ({ ...p, [k]: !p[k] }));
+
+  return (
+    <div className="relative flex h-full flex-col bg-paper">
+      <ScreenHeader title="Alert preferences" />
+
+      <div className="mt-2 flex-1 space-y-3 overflow-y-auto px-5 pb-10 pt-2">
+        <div className="rounded-[22px] bg-beige p-4">
+          <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Notify me when wait drops below</div>
+          <div className="mt-2 flex items-end gap-2">
+            <span className="font-display text-[34px] font-semibold leading-none tracking-tight text-ink">{threshold}</span>
+            <span className="mb-1 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">min</span>
+          </div>
+          <input type="range" min={5} max={60} step={5} value={threshold} onChange={(e) => setThreshold(parseInt(e.target.value))} className="ql-range mt-4 w-full" />
+          <div className="mt-2 flex justify-between text-[10px] font-medium text-muted-foreground">
+            <span>5</span><span>30</span><span>60</span>
+          </div>
+        </div>
+
+        <ToggleRow icon={Zap} tone="free" title="Smart crowd alerts" body="Ping me when a saved place becomes free." on={prefs.smart} onChange={() => toggle("smart")} />
+        <ToggleRow icon={Bus} tone="live" title="Transport congestion" body="Live updates for routes you take." on={prefs.transport} onChange={() => toggle("transport")} />
+        <ToggleRow icon={Dumbbell} tone="medium" title="Gym crowd alerts" body="Best windows for low occupancy." on={prefs.gym} onChange={() => toggle("gym")} />
+        <ToggleRow icon={Sparkles} tone="ai" title="AI predictions" body="Daily 4-hour forecast for nearby places." on={prefs.ai} onChange={() => toggle("ai")} />
+        <ToggleRow icon={Volume2} tone="busy" title="Quiet hours" body="Mute non-critical alerts 10PM – 8AM." on={prefs.quiet} onChange={() => toggle("quiet")} />
+
+        <div className="rounded-[22px] bg-ink p-4 text-paper">
+          <div className="text-[10px] font-semibold uppercase tracking-wider opacity-60">Preview</div>
+          <div className="mt-2 flex items-start gap-3">
+            <div className="grid h-9 w-9 place-items-center rounded-2xl bg-q-free"><Zap className="h-4 w-4 text-q-free-foreground" /></div>
+            <div className="leading-tight">
+              <div className="text-[12.5px] font-semibold">SBI · 12th Main now under {threshold} min</div>
+              <div className="mt-0.5 text-[11px] opacity-70">Tap to navigate · just now</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ToggleRow({ icon: Icon, tone, title, body, on, onChange }: { icon: typeof Zap; tone: "free" | "medium" | "busy" | "ai" | "live"; title: string; body: string; on: boolean; onChange: () => void }) {
+  const bg = { free: "bg-q-free", medium: "bg-q-medium", busy: "bg-q-busy", ai: "bg-q-ai", live: "bg-q-live" }[tone];
+  const fg = { free: "text-q-free-foreground", medium: "text-q-medium-foreground", busy: "text-q-busy-foreground", ai: "text-q-ai-foreground", live: "text-q-live-foreground" }[tone];
+  return (
+    <div className="flex items-start gap-3 rounded-[20px] bg-paper p-4 ql-ring">
+      <div className={`grid h-10 w-10 shrink-0 place-items-center rounded-2xl ${bg}`}>
+        <Icon className={`h-4 w-4 ${fg}`} />
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="text-[13px] font-semibold text-ink">{title}</div>
+        <div className="mt-0.5 text-[11.5px] leading-snug text-muted-foreground">{body}</div>
+      </div>
+      <button
+        onClick={onChange}
+        className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${on ? "bg-ink" : "bg-ink/15"}`}
+      >
+        <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-paper transition-transform ${on ? "translate-x-[22px]" : "translate-x-0.5"}`} />
+      </button>
+    </div>
+  );
+}
+
+/* ---------- empty states ---------- */
+
+function EmptyStatesScreen() {
+  return (
+    <div className="relative flex h-full flex-col bg-beige">
+      <ScreenHeader title="Empty states" />
+      <div className="mt-2 flex-1 space-y-3 overflow-y-auto px-5 pb-10 pt-2">
+        <EmptyCard
+          icon={Bookmark}
+          title="No saved places yet"
+          body="Bookmark places to track their live wait and crowd levels here."
+          cta="Browse nearby"
+          tone="ai"
+        />
+        <EmptyCard
+          icon={History}
+          title="No recent activity"
+          body="Your check-ins and contributions will appear once you start using QueueLess."
+          cta="Make a check-in"
+          tone="live"
+        />
+        <EmptyCard
+          icon={Wifi}
+          title="No crowd data available"
+          body="We don't have enough signals here yet. Help others by sending the first report."
+          cta="Be the first"
+          tone="medium"
+        />
+      </div>
+    </div>
+  );
+}
+
+function EmptyCard({ icon: Icon, title, body, cta, tone }: { icon: typeof Zap; title: string; body: string; cta: string; tone: "ai" | "live" | "medium" }) {
+  const bg = { ai: "bg-q-ai", live: "bg-q-live", medium: "bg-q-medium" }[tone];
+  const fg = { ai: "text-q-ai-foreground", live: "text-q-live-foreground", medium: "text-q-medium-foreground" }[tone];
+  return (
+    <div className="rounded-[24px] bg-paper p-5 ql-ring">
+      <div className={`relative grid h-20 w-20 place-items-center rounded-[24px] ${bg}`}>
+        <Icon className={`h-7 w-7 ${fg}`} />
+        <span className="absolute -right-1 -top-1 h-3 w-3 rounded-full bg-paper ql-ring" />
+      </div>
+      <div className="mt-4 font-display text-[18px] font-semibold tracking-tight text-ink">{title}</div>
+      <p className="mt-1.5 text-[12.5px] leading-relaxed text-muted-foreground">{body}</p>
+      <button className="mt-4 inline-flex items-center gap-2 rounded-full bg-ink px-4 py-2 text-[12px] font-semibold text-paper active:scale-[0.98] transition-transform">
+        {cta} <ArrowRight className="h-3.5 w-3.5" />
+      </button>
+    </div>
+  );
+}
+
+/* ---------- feedback ---------- */
+
+function FeedbackScreen() {
+  const { go } = useNav();
+  const [accurate, setAccurate] = useState<null | boolean>(null);
+  const [rating, setRating] = useState(4);
+
+  return (
+    <div className="relative flex h-full flex-col bg-paper px-5 pb-8 pt-6">
+      <div className="flex items-center justify-between">
+        <button onClick={() => go("home")} className="grid h-10 w-10 place-items-center rounded-full bg-beige"><X className="h-4 w-4 text-ink" /></button>
+        <span className="text-[12px] font-semibold text-ink">Wait completed</span>
+        <span className="rounded-full bg-q-ai px-2.5 py-1 text-[10px] font-semibold text-q-ai-foreground">+18 pts</span>
+      </div>
+
+      <div className="mt-8 flex flex-col items-center text-center">
+        <div className="grid h-20 w-20 place-items-center rounded-full bg-q-free">
+          <Check className="h-9 w-9 text-q-free-foreground" />
+        </div>
+        <h2 className="mt-5 font-display text-[26px] font-semibold leading-tight tracking-tight text-ink">You're done waiting.</h2>
+        <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">Thanks for using QueueLess at Third Wave Coffee.</p>
+      </div>
+
+      <div className="mt-8 rounded-[24px] bg-beige p-5">
+        <div className="text-[12px] font-semibold text-ink">Was the prediction accurate?</div>
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <button
+            onClick={() => setAccurate(true)}
+            className={`flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-[13px] font-semibold transition-colors ${accurate === true ? "bg-q-free text-q-free-foreground" : "bg-paper text-ink ql-ring"}`}
+          >
+            <ThumbsUp className="h-4 w-4" /> Spot on
+          </button>
+          <button
+            onClick={() => setAccurate(false)}
+            className={`flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-[13px] font-semibold transition-colors ${accurate === false ? "bg-q-busy text-q-busy-foreground" : "bg-paper text-ink ql-ring"}`}
+          >
+            <ThumbsDown className="h-4 w-4" /> Off
+          </button>
+        </div>
+      </div>
+
+      <div className="mt-3 rounded-[24px] bg-beige p-5">
+        <div className="text-[12px] font-semibold text-ink">Rate your visit</div>
+        <div className="mt-3 flex items-center justify-between">
+          {[1, 2, 3, 4, 5].map((n) => (
+            <button key={n} onClick={() => setRating(n)} className="p-1">
+              <Star className={`h-7 w-7 ${n <= rating ? "fill-ink text-ink" : "text-ink/25"}`} />
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-auto grid grid-cols-[1fr_2fr] gap-2 pt-6">
+        <button onClick={() => go("home")} className="rounded-2xl bg-beige px-4 py-3.5 text-[13px] font-semibold text-ink ql-ring">Later</button>
+        <button onClick={() => go("home")} className="flex items-center justify-center gap-2 rounded-2xl bg-ink px-4 py-3.5 text-[13px] font-semibold text-paper active:scale-[0.99] transition-transform">
+          Submit feedback <ArrowRight className="h-4 w-4" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- live activity / dynamic widget ---------- */
+
+function LiveActivityScreen() {
+  const { back } = useNav();
+  return (
+    <div className="relative flex h-full flex-col" style={{ background: "linear-gradient(180deg, oklch(0.18 0.008 60), oklch(0.12 0.008 60))" }}>
+      <div className="flex items-center justify-between px-5 pt-6 text-paper">
+        <button onClick={back} className="grid h-10 w-10 place-items-center rounded-full bg-paper/10 active:bg-paper/20"><ArrowLeft className="h-4 w-4" /></button>
+        <span className="text-[12px] font-semibold opacity-90">Live Activity</span>
+        <div className="h-10 w-10" />
+      </div>
+
+      <div className="px-5 pt-10 text-paper">
+        <div className="text-[10px] font-semibold uppercase tracking-wider opacity-60">Lock screen preview</div>
+      </div>
+
+      <div className="mt-3 space-y-3 px-5 pb-8">
+        {/* Dynamic island compact */}
+        <div className="mx-auto flex w-fit items-center gap-2 rounded-full bg-black px-4 py-2 text-paper">
+          <LiveDot tone="live" />
+          <span className="text-[12px] font-semibold">12:34</span>
+          <span className="text-[12px] opacity-70">·</span>
+          <span className="text-[12px] font-medium">SBI · 12 min</span>
+        </div>
+
+        {/* Expanded live activity card */}
+        <div className="rounded-[26px] bg-black/90 p-5 text-paper ring-1 ring-paper/10">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="grid h-8 w-8 place-items-center rounded-xl bg-q-live">
+                <Building2 className="h-4 w-4 text-q-live-foreground" />
+              </div>
+              <div className="leading-tight">
+                <div className="text-[10px] font-semibold uppercase tracking-wider opacity-60">In queue</div>
+                <div className="text-[13px] font-semibold">SBI · 12th Main</div>
+              </div>
+            </div>
+            <LiveDot tone="live" />
+          </div>
+
+          <div className="mt-4 flex items-end justify-between">
+            <div>
+              <div className="text-[10px] font-semibold uppercase tracking-wider opacity-60">Wait left</div>
+              <div className="font-display text-[44px] font-semibold leading-none tracking-tight">12<span className="ml-1 text-[14px] font-medium opacity-60">min</span></div>
+            </div>
+            <div className="text-right">
+              <div className="text-[10px] font-semibold uppercase tracking-wider opacity-60">Position</div>
+              <div className="font-display text-[22px] font-semibold tracking-tight">#3</div>
+            </div>
+          </div>
+
+          <div className="mt-4">
+            <div className="flex items-center justify-between text-[10px] opacity-70">
+              <span>You joined at 12:18</span>
+              <span>ETA 12:46</span>
+            </div>
+            <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-paper/15">
+              <div className="ql-bar-anim h-full rounded-full bg-q-live-foreground" style={{ width: "62%" }} />
+            </div>
+          </div>
+        </div>
+
+        {/* Update notification */}
+        <div className="rounded-[22px] bg-black/80 p-4 text-paper ring-1 ring-paper/10">
+          <div className="flex items-center gap-3">
+            <div className="grid h-9 w-9 place-items-center rounded-2xl bg-q-free">
+              <ArrowDownRight className="h-4 w-4 text-q-free-foreground" />
+            </div>
+            <div className="min-w-0 flex-1 leading-tight">
+              <div className="flex items-center justify-between">
+                <span className="text-[12.5px] font-semibold">Occupancy dropped to 38%</span>
+                <span className="text-[10px] opacity-60">just now</span>
+              </div>
+              <div className="mt-0.5 text-[11px] opacity-70">Counter 3 freed up — wait may shorten.</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Alert */}
+        <div className="rounded-[22px] bg-black/80 p-4 text-paper ring-1 ring-paper/10">
+          <div className="flex items-center gap-3">
+            <div className="grid h-9 w-9 place-items-center rounded-2xl bg-q-ai">
+              <Sparkles className="h-4 w-4 text-q-ai-foreground" />
+            </div>
+            <div className="min-w-0 flex-1 leading-tight">
+              <div className="flex items-center justify-between">
+                <span className="text-[12.5px] font-semibold">Smart alert · 92% conf.</span>
+                <span className="text-[10px] opacity-60">2m</span>
+              </div>
+              <div className="mt-0.5 text-[11px] opacity-70">A nearby branch has only 3 min wait.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- transport detail ---------- */
+
+function TransportScreen() {
+  return (
+    <div className="relative flex h-full flex-col bg-beige">
+      <ScreenHeader title="Transport" right={<button className="grid h-10 w-10 place-items-center rounded-full bg-paper ql-ring"><Bookmark className="h-4 w-4 text-ink" /></button>} />
+
+      <div className="mt-2 flex-1 space-y-3 overflow-y-auto px-5 pb-10 pt-2">
+        <div className="rounded-[24px] bg-q-live p-5 text-q-live-foreground">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-semibold uppercase tracking-wider opacity-80">Route 500D · Silk Board → ITPL</span>
+            <span className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider"><LiveDot tone="live" /> Live</span>
+          </div>
+          <div className="mt-3 flex items-end gap-2">
+            <span className="font-display text-[44px] font-semibold leading-none tracking-tight text-ink">4</span>
+            <span className="mb-1.5 text-[12px] font-medium opacity-70">min to arrival</span>
+          </div>
+          <div className="mt-3 flex items-center gap-2 text-[11px] font-medium">
+            <Bus className="h-3.5 w-3.5" /> KA-01-F-3421 · AC
+            <span className="opacity-50">·</span>
+            <span>2 stops away</span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2">
+          <div className="rounded-[20px] bg-paper p-4 ql-ring">
+            <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Bus occupancy</div>
+            <div className="mt-1 flex items-end gap-2">
+              <span className="font-display text-[22px] font-semibold tracking-tight text-ink">68%</span>
+              <span className="mb-1 text-[10px] font-semibold uppercase text-q-medium-foreground">Filling</span>
+            </div>
+            <div className="mt-2 grid grid-cols-6 gap-1">
+              {Array.from({ length: 18 }).map((_, i) => (
+                <div key={i} className={`h-3 rounded-sm ${i < 12 ? "bg-q-medium-foreground/70" : "bg-ink/10"}`} />
+              ))}
+            </div>
+          </div>
+          <div className="rounded-[20px] bg-paper p-4 ql-ring">
+            <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Platform crowd</div>
+            <div className="mt-1 flex items-end gap-2">
+              <span className="font-display text-[22px] font-semibold tracking-tight text-ink">Low</span>
+            </div>
+            <div className="mt-3 flex -space-x-1.5">
+              {[1,2,3,4,5].map((i) => (
+                <div key={i} className="h-5 w-5 rounded-full bg-q-free-foreground/80 ring-2 ring-paper" />
+              ))}
+              <div className="grid h-5 w-5 place-items-center rounded-full bg-ink text-[9px] font-semibold text-paper ring-2 ring-paper">+3</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-[22px] bg-paper p-4 ql-ring">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Congestion forecast · 1h</span>
+            <span className="text-[10px] font-medium text-muted-foreground">87% conf.</span>
+          </div>
+          <div className="mt-3 text-q-live-foreground"><Sparkline tone="live" /></div>
+          <div className="mt-1 flex justify-between text-[10px] font-medium text-muted-foreground">
+            <span>now</span><span>+15m</span><span>+30m</span><span>+45m</span><span>+1h</span>
+          </div>
+        </div>
+
+        <div className="rounded-[22px] bg-paper p-4 ql-ring">
+          <div className="flex items-center justify-between">
+            <span className="text-[12px] font-semibold text-ink">Next arrivals</span>
+            <Timestamp>Updated 8 sec ago</Timestamp>
+          </div>
+          <div className="mt-3 space-y-2">
+            {[
+              { route: "500D", eta: "4 min", occ: "Filling", tone: "medium" as const, icon: Bus },
+              { route: "Purple Line", eta: "7 min", occ: "Low", tone: "free" as const, icon: Train },
+              { route: "335E", eta: "12 min", occ: "Packed", tone: "busy" as const, icon: Bus },
+            ].map((r) => (
+              <div key={r.route} className="flex items-center justify-between rounded-2xl bg-beige px-3 py-2.5">
+                <div className="flex items-center gap-3">
+                  <div className={`grid h-9 w-9 place-items-center rounded-xl ${r.tone === "free" ? "bg-q-free" : r.tone === "medium" ? "bg-q-medium" : "bg-q-busy"}`}>
+                    <r.icon className={`h-4 w-4 ${r.tone === "free" ? "text-q-free-foreground" : r.tone === "medium" ? "text-q-medium-foreground" : "text-q-busy-foreground"}`} />
+                  </div>
+                  <div className="leading-tight">
+                    <div className="text-[13px] font-semibold text-ink">{r.route}</div>
+                    <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">{r.occ}</div>
+                  </div>
+                </div>
+                <div className="font-display text-[16px] font-semibold tracking-tight text-ink">{r.eta}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- crowd forecast radar ---------- */
+
+function RadarScreen() {
+  const hours = ["now", "+1h", "+2h", "+3h", "+4h", "+5h", "+6h"];
+  const intensity = [40, 62, 78, 88, 70, 55, 42];
+  return (
+    <div className="relative flex h-full flex-col bg-paper">
+      <ScreenHeader title="Forecast Radar" right={<button className="grid h-10 w-10 place-items-center rounded-full bg-beige"><Sparkles className="h-4 w-4 text-q-ai-foreground" /></button>} />
+
+      <div className="px-5 pt-3">
+        <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Indiranagar · 1.2 km radius</div>
+        <h2 className="mt-1 font-display text-[24px] font-semibold leading-tight tracking-tight text-ink">Crowd will peak at <span className="text-q-ai-foreground">5 PM</span>.</h2>
+      </div>
+
+      <div className="mt-4 flex-1 space-y-3 overflow-y-auto px-5 pb-10">
+        <div className="relative h-56 overflow-hidden rounded-[24px] bg-stone ql-ring">
+          <div className="absolute inset-0 ql-grid-bg opacity-60" />
+          {/* heat zones */}
+          <div className="absolute left-[20%] top-[24%] h-32 w-32 rounded-full" style={{ background: "radial-gradient(circle, color-mix(in oklab, var(--q-busy) 90%, transparent), transparent 70%)" }} />
+          <div className="absolute right-[12%] top-[18%] h-24 w-24 rounded-full" style={{ background: "radial-gradient(circle, color-mix(in oklab, var(--q-medium) 90%, transparent), transparent 70%)" }} />
+          <div className="absolute left-[36%] bottom-[14%] h-28 w-28 rounded-full" style={{ background: "radial-gradient(circle, color-mix(in oklab, var(--q-ai) 90%, transparent), transparent 70%)" }} />
+          <div className="absolute right-[26%] bottom-[20%] h-20 w-20 rounded-full" style={{ background: "radial-gradient(circle, color-mix(in oklab, var(--q-free) 90%, transparent), transparent 70%)" }} />
+          {/* radar sweep rings */}
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+            <div className="relative h-3 w-3 rounded-full text-q-ai-foreground ql-pulse">
+              <div className="absolute inset-0 rounded-full bg-q-ai-foreground ring-4 ring-paper" />
+            </div>
+          </div>
+          <div className="absolute left-3 top-3 flex items-center gap-1.5 rounded-full bg-paper px-3 py-1.5 ql-shadow">
+            <LiveDot tone="busy" />
+            <span className="text-[10px] font-semibold text-ink">Live heatmap</span>
+          </div>
+          <div className="absolute right-3 top-3 rounded-full bg-paper px-3 py-1.5 ql-shadow">
+            <span className="text-[10px] font-medium text-muted-foreground">Updated 12 sec ago</span>
+          </div>
+        </div>
+
+        <div className="rounded-[22px] bg-beige p-4">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Density timeline</span>
+            <span className="text-[10px] font-medium text-muted-foreground">92% conf.</span>
+          </div>
+          <div className="mt-3 flex h-20 items-end gap-1.5">
+            {intensity.map((v, i) => {
+              const tone = v > 80 ? "bg-q-busy-foreground" : v > 60 ? "bg-q-medium-foreground" : v > 40 ? "bg-q-ai-foreground" : "bg-q-free-foreground";
+              return <div key={i} className={`flex-1 rounded-md ${tone}`} style={{ height: `${v}%`, opacity: i === 3 ? 1 : 0.55 }} />;
+            })}
+          </div>
+          <div className="mt-2 flex justify-between text-[10px] font-medium text-muted-foreground">
+            {hours.map((h) => <span key={h}>{h}</span>)}
+          </div>
+        </div>
+
+        <div className="rounded-[22px] bg-q-ai p-5">
+          <div className="flex items-center justify-between text-q-ai-foreground">
+            <span className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider opacity-80">
+              <Flame className="h-3 w-3" /> Hotspots forming
+            </span>
+            <span className="text-[11px] font-semibold">+34%</span>
+          </div>
+          <p className="mt-2 font-display text-[18px] font-semibold leading-snug tracking-tight text-q-ai-foreground">
+            100ft Road & CMH Junction will get crowded around 5–6 PM.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <span className="rounded-full bg-paper/70 px-3 py-1 text-[10px] font-semibold text-q-ai-foreground">Avoid 5–6 PM</span>
+            <span className="rounded-full bg-paper/70 px-3 py-1 text-[10px] font-semibold text-q-ai-foreground">Best 3:30 PM</span>
+          </div>
+        </div>
+
+        <div className="rounded-[22px] bg-paper p-4 ql-ring">
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">AI recommendations</div>
+          <div className="mt-3 space-y-2">
+            {[
+              { tone: "free" as const, icon: Coffee, t: "Visit cafés now", b: "Wait at Blue Tokai is under 5 min." },
+              { tone: "medium" as const, icon: Building2, t: "Banks calm at 3 PM", b: "Apollo branch should clear by then." },
+              { tone: "busy" as const, icon: Bus, t: "Skip 500D 5–6 PM", b: "Expected 88% occupancy on platform." },
+            ].map((r) => (
+              <div key={r.t} className="flex items-center gap-3 rounded-2xl bg-beige px-3 py-2.5">
+                <div className={`grid h-9 w-9 place-items-center rounded-xl ${r.tone === "free" ? "bg-q-free" : r.tone === "medium" ? "bg-q-medium" : "bg-q-busy"}`}>
+                  <r.icon className={`h-4 w-4 ${r.tone === "free" ? "text-q-free-foreground" : r.tone === "medium" ? "text-q-medium-foreground" : "text-q-busy-foreground"}`} />
+                </div>
+                <div className="min-w-0 flex-1 leading-tight">
+                  <div className="text-[12.5px] font-semibold text-ink">{r.t}</div>
+                  <div className="mt-0.5 text-[11px] text-muted-foreground">{r.b}</div>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

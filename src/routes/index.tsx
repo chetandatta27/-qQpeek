@@ -4,7 +4,8 @@ import {
   Activity, Users, Coffee, Building2, Stethoscope, Dumbbell, Bus, Scissors,
   Sparkles, Navigation, ArrowRight, ArrowUpRight, Check, Plus, Minus, Heart,
   BellRing, X, ArrowLeft, CircleDot, Volume2, Smile, Trophy, History, Bookmark,
-  Zap
+  Zap, Star, Inbox, Radar, Train, Wifi, Flame, ArrowDownRight, SlidersHorizontal,
+  ThumbsUp, ThumbsDown, Gauge
 } from "lucide-react";
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 

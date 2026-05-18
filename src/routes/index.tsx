@@ -164,21 +164,16 @@ function SplashScreen() {
 
 function OnboardingScreen() {
   const { go } = useNav();
-  return (
-    <div className="relative flex h-full flex-col bg-paper px-6 pb-8 pt-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="relative grid h-7 w-7 place-items-center rounded-[8px] bg-ink text-paper">
-            <div className="h-1.5 w-1.5 rounded-full bg-paper" />
-          </div>
-          <span className="font-display text-[16px] font-semibold tracking-tight text-ink">QueueLess</span>
-        </div>
-        <button onClick={() => go("home")} className="text-[12px] font-medium text-muted-foreground">Skip</button>
-      </div>
+  const [step, setStep] = useState(0);
 
-      <div className="mt-6 flex-1">
-        <div className="relative h-[44%] min-h-[260px] w-full overflow-hidden rounded-[28px] bg-q-live ql-ring">
-          <div className="absolute inset-0 ql-grid-bg opacity-50" />
+  const slides = [
+    {
+      tone: "live" as const,
+      eyebrow: "01 · Live data",
+      title: <>Check live waiting<br />times anywhere.</>,
+      body: "Real-time queues for hospitals, banks, cafés, gyms and transport near you.",
+      art: (
+        <>
           <div className="absolute left-6 top-6 rounded-2xl bg-paper p-3 ql-shadow">
             <div className="flex items-center gap-2">
               <Activity className="h-4 w-4 text-q-live-foreground" />
@@ -197,28 +192,95 @@ function OnboardingScreen() {
           <div className="absolute right-10 top-10 grid h-12 w-12 place-items-center rounded-full bg-paper ql-shadow">
             <MapPin className="h-5 w-5 text-ink" />
           </div>
+        </>
+      ),
+    },
+    {
+      tone: "ai" as const,
+      eyebrow: "02 · AI prediction",
+      title: <>Predict crowds<br />before you arrive.</>,
+      body: "Our model forecasts the next 4 hours with 92% confidence for places near you.",
+      art: (
+        <>
+          <div className="absolute inset-x-6 top-7 rounded-2xl bg-paper p-3 ql-shadow">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-q-ai-foreground">Forecast</span>
+              <span className="text-[10px] font-medium text-muted-foreground">92% conf.</span>
+            </div>
+            <div className="mt-2 text-q-ai-foreground"><Sparkline tone="ai" /></div>
+          </div>
+          <div className="absolute bottom-6 left-6 rounded-2xl bg-ink p-3 text-paper ql-shadow">
+            <Sparkles className="h-4 w-4" />
+            <div className="mt-1.5 text-[11px] font-medium opacity-70">Best in</div>
+            <div className="text-[16px] font-semibold">28 min</div>
+          </div>
+        </>
+      ),
+    },
+    {
+      tone: "free" as const,
+      eyebrow: "03 · Nearby",
+      title: <>Find less crowded<br />places nearby.</>,
+      body: "We surface the calmest options around you, ranked by wait time and travel distance.",
+      art: (
+        <>
+          <div className="absolute left-6 top-6 rounded-2xl bg-paper p-3 ql-shadow">
+            <div className="flex items-center gap-2"><MapPin className="h-4 w-4 text-ink" /><span className="text-[11px] font-semibold text-ink">3 nearby</span></div>
+            <div className="mt-2 flex gap-1.5">
+              <span className="rounded-full bg-q-free-foreground/15 px-2 py-0.5 text-[10px] font-semibold text-q-free-foreground">3m</span>
+              <span className="rounded-full bg-q-medium-foreground/15 px-2 py-0.5 text-[10px] font-semibold text-q-medium-foreground">9m</span>
+              <span className="rounded-full bg-q-busy-foreground/15 px-2 py-0.5 text-[10px] font-semibold text-q-busy-foreground">47m</span>
+            </div>
+          </div>
+          <div className="absolute bottom-6 right-6 rounded-2xl bg-ink p-3 text-paper ql-shadow">
+            <Navigation className="h-4 w-4" />
+            <div className="mt-1.5 text-[11px] font-medium opacity-70">Walk</div>
+            <div className="text-[16px] font-semibold">6 min</div>
+          </div>
+        </>
+      ),
+    },
+  ];
+
+  const s = slides[step];
+  const isLast = step === slides.length - 1;
+  const toneBg = s.tone === "live" ? "bg-q-live" : s.tone === "ai" ? "bg-q-ai" : "bg-q-free";
+
+  return (
+    <div className="relative flex h-full flex-col bg-paper px-6 pb-8 pt-6">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="relative grid h-7 w-7 place-items-center rounded-[8px] bg-ink text-paper">
+            <div className="h-1.5 w-1.5 rounded-full bg-paper" />
+          </div>
+          <span className="font-display text-[16px] font-semibold tracking-tight text-ink">QueueLess</span>
+        </div>
+        <button onClick={() => go("home")} className="text-[12px] font-medium text-muted-foreground">Skip</button>
+      </div>
+
+      <div className="mt-6 flex-1">
+        <div className={`relative h-[44%] min-h-[260px] w-full overflow-hidden rounded-[28px] ${toneBg} ql-ring`}>
+          <div className="absolute inset-0 ql-grid-bg opacity-50" />
+          {s.art}
         </div>
 
         <div className="mt-7">
           <div className="flex items-center gap-1.5">
-            <span className="h-1.5 w-6 rounded-full bg-ink" />
-            <span className="h-1.5 w-1.5 rounded-full bg-ink/20" />
-            <span className="h-1.5 w-1.5 rounded-full bg-ink/20" />
+            {slides.map((_, i) => (
+              <span key={i} className={i === step ? "h-1.5 w-6 rounded-full bg-ink" : "h-1.5 w-1.5 rounded-full bg-ink/20"} />
+            ))}
           </div>
-          <h2 className="mt-4 font-display text-[28px] font-semibold leading-[1.1] tracking-tight text-ink">
-            Check live waiting<br />times anywhere.
-          </h2>
-          <p className="mt-3 text-[13.5px] leading-relaxed text-muted-foreground">
-            Real-time queues for hospitals, banks, cafés, gyms and transport near you.
-          </p>
+          <div className="mt-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{s.eyebrow}</div>
+          <h2 className="mt-2 font-display text-[28px] font-semibold leading-[1.1] tracking-tight text-ink">{s.title}</h2>
+          <p className="mt-3 text-[13.5px] leading-relaxed text-muted-foreground">{s.body}</p>
         </div>
       </div>
 
       <button
-        onClick={() => go("home")}
+        onClick={() => (isLast ? go("home") : setStep((n) => n + 1))}
         className="mt-6 flex items-center justify-between rounded-2xl bg-ink px-5 py-4 text-paper active:scale-[0.98] transition-transform"
       >
-        <span className="text-[14px] font-semibold">Continue</span>
+        <span className="text-[14px] font-semibold">{isLast ? "Get started" : "Continue"}</span>
         <ArrowRight className="h-4 w-4" />
       </button>
     </div>

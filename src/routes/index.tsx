@@ -648,14 +648,14 @@ function InfoTile({ label, value, icon: Icon }: { label: string; value: string; 
 }
 
 function PredictionScreen() {
-  const { back } = useNav();
+  const { back, go } = useNav();
   return (
     <div className="relative flex h-full flex-col bg-paper">
       <div className="px-5 pt-6">
         <div className="flex items-center justify-between">
           <button onClick={back} className="grid h-10 w-10 place-items-center rounded-full bg-beige"><ArrowLeft className="h-4 w-4 text-ink" /></button>
           <span className="text-[12px] font-semibold text-ink">AI Predictions</span>
-          <button className="grid h-10 w-10 place-items-center rounded-full bg-beige"><Sparkles className="h-4 w-4 text-q-ai-foreground" /></button>
+          <button onClick={() => go("radar")} className="grid h-10 w-10 place-items-center rounded-full bg-beige active:bg-stone"><Radar className="h-4 w-4 text-q-ai-foreground" /></button>
         </div>
 
         <div className="mt-5">

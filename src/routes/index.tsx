@@ -767,7 +767,7 @@ function NotifCard({
 }
 
 function ContributeScreen() {
-  const { back } = useNav();
+  const { back, go } = useNav();
   const [crowd, setCrowd] = useState(58);
   const [wait, setWait] = useState(9);
   const [vibes, setVibes] = useState<string[]>(["Quiet", "Cozy"]);

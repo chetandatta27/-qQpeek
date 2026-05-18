@@ -72,6 +72,14 @@ function ScreenRouter({ screen }: { screen: Screen }) {
       {screen === "detail" && <DetailScreen />}
       {screen === "contribute" && <ContributeScreen />}
       {screen === "predictions" && <PredictionScreen />}
+      {screen === "search" && <SearchScreen />}
+      {screen === "compare" && <CompareScreen />}
+      {screen === "settings" && <AlertSettingsScreen />}
+      {screen === "empty" && <EmptyStatesScreen />}
+      {screen === "feedback" && <FeedbackScreen />}
+      {screen === "live" && <LiveActivityScreen />}
+      {screen === "transport" && <TransportScreen />}
+      {screen === "radar" && <RadarScreen />}
     </div>
   );
 }

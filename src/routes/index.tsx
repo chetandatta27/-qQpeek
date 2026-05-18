@@ -849,7 +849,7 @@ function ProfileScreen() {
       <div className="flex-1 overflow-y-auto px-5 pb-28 pt-6">
         <div className="flex items-center justify-between">
           <h2 className="font-display text-[22px] font-semibold tracking-tight text-ink">Profile</h2>
-          <button className="grid h-10 w-10 place-items-center rounded-full bg-paper ql-ring"><Settings className="h-4 w-4 text-ink" /></button>
+          <button onClick={() => go("settings")} className="grid h-10 w-10 place-items-center rounded-full bg-paper ql-ring active:bg-beige"><Settings className="h-4 w-4 text-ink" /></button>
         </div>
 
         <div className="mt-4 flex items-center gap-3">

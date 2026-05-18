@@ -834,7 +834,7 @@ function ContributeScreen() {
         <button onClick={back} className="flex items-center justify-center gap-2 rounded-2xl bg-beige px-4 py-3.5 text-[13px] font-semibold text-ink ql-ring">
           <Check className="h-4 w-4" /> Wait done
         </button>
-        <button onClick={back} className="flex items-center justify-center gap-2 rounded-2xl bg-ink px-4 py-3.5 text-[13px] font-semibold text-paper active:scale-[0.99] transition-transform">
+        <button onClick={() => go("feedback")} className="flex items-center justify-center gap-2 rounded-2xl bg-ink px-4 py-3.5 text-[13px] font-semibold text-paper active:scale-[0.99] transition-transform">
           Submit <ArrowRight className="h-4 w-4" />
         </button>
       </div>

@@ -18,7 +18,9 @@ export const Route = createFileRoute("/")({
 type Screen =
   | "splash" | "onboarding"
   | "home" | "map" | "alerts" | "me"
-  | "detail" | "contribute" | "predictions";
+  | "detail" | "contribute" | "predictions"
+  | "search" | "compare" | "settings" | "empty"
+  | "feedback" | "live" | "transport" | "radar";
 
 type NavCtx = {
   screen: Screen;

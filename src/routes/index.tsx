@@ -224,7 +224,17 @@ function OnboardingScreen() {
 
 function HomeScreen() {
   const { go } = useNav();
-  const [cat, setCat] = useState("Hospitals");
+  const [cat, setCat] = useState("All");
+  const categories = [
+    { icon: Activity, label: "All" },
+    { icon: Stethoscope, label: "Hospitals" },
+    { icon: Coffee, label: "Cafés" },
+    { icon: Building2, label: "Banks" },
+    { icon: Dumbbell, label: "Gyms" },
+    { icon: Bus, label: "Transport" },
+    { icon: Scissors, label: "Salons" },
+  ];
+
   return (
     <div className="relative flex h-full flex-col bg-beige">
       <div className="px-5 pt-6">
@@ -243,45 +253,14 @@ function HomeScreen() {
           </div>
         </div>
 
-        <button onClick={() => go("search")} className="mt-4 flex w-full items-center gap-2 rounded-2xl bg-paper px-4 py-3 ql-ring active:bg-beige transition-colors">
+        <button onClick={() => go("search")} className="mt-5 flex w-full items-center gap-2 rounded-2xl bg-paper px-4 py-3.5 ql-ring active:bg-beige transition-colors">
           <Search className="h-4 w-4 text-muted-foreground" />
-          <span className="text-[13px] text-muted-foreground">Search places, queues, transit…</span>
-        </button>
-
-        <button onClick={() => go("live")} className="mt-3 flex w-full items-center justify-between rounded-2xl bg-ink px-4 py-3 text-paper ql-shadow active:scale-[0.99] transition-transform">
-          <div className="flex items-center gap-3">
-            <span className="relative inline-flex">
-              <span className="absolute inset-0 animate-ping rounded-full bg-q-busy opacity-60" />
-              <span className="relative h-2 w-2 rounded-full bg-q-busy" />
-            </span>
-            <div className="leading-tight">
-              <div className="text-[10px] font-semibold uppercase tracking-wider opacity-60">Live activity</div>
-              <div className="text-[13px] font-semibold">SBI · 12 min left in queue</div>
-            </div>
-          </div>
-          <ArrowUpRight className="h-4 w-4 opacity-70" />
-        </button>
-
-        <button onClick={() => go("predictions")} className="mt-3 flex w-full items-start gap-3 rounded-2xl bg-q-ai px-4 py-3 text-left active:opacity-90">
-          <div className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-q-ai-foreground text-paper">
-            <Sparkles className="h-3.5 w-3.5" />
-          </div>
-          <div className="leading-tight">
-            <div className="text-[10px] font-semibold uppercase tracking-wider text-q-ai-foreground/70">AI Suggestion · 92% conf.</div>
-            <div className="text-[12.5px] font-medium text-q-ai-foreground">Best time to visit nearby places: 3PM–5PM</div>
-          </div>
+          <span className="text-[13px] text-muted-foreground">Search a place near you</span>
         </button>
 
         <div className="-mx-5 mt-4 overflow-hidden">
           <div className="flex gap-2 overflow-x-auto px-5 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {[
-              { icon: Stethoscope, label: "Hospitals" },
-              { icon: Coffee, label: "Cafés" },
-              { icon: Building2, label: "Banks" },
-              { icon: Dumbbell, label: "Gyms" },
-              { icon: Bus, label: "Transport" },
-              { icon: Scissors, label: "Salons" },
-            ].map(({ icon: Icon, label }) => (
+            {categories.map(({ icon: Icon, label }) => (
               <button
                 key={label}
                 onClick={() => setCat(label)}
@@ -295,24 +274,19 @@ function HomeScreen() {
             ))}
           </div>
         </div>
-
-        <div className="-mx-5 mt-3 overflow-hidden">
-          <div className="flex gap-2 overflow-x-auto px-5 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <ToolPill icon={Gauge} label="Compare" onClick={() => go("compare")} />
-            <ToolPill icon={Radar} label="Forecast radar" onClick={() => go("radar")} />
-            <ToolPill icon={Train} label="Transport" onClick={() => go("transport")} />
-            <ToolPill icon={SlidersHorizontal} label="Alert prefs" onClick={() => go("settings")} />
-            <ToolPill icon={Inbox} label="Empty states" onClick={() => go("empty")} />
-          </div>
-        </div>
       </div>
 
-      <div className="mt-2 flex-1 space-y-3 overflow-y-auto px-5 pb-28 pt-3">
-        <QueueCard tone="busy" name="Apollo Hospital" meta="Hospital · 2.3 km" wait="47 min" trend="up" trendLabel="Crowd increasing" onClick={() => go("detail")} />
+      <div className="mt-4 flex items-center justify-between px-5">
+        <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Places near you</div>
+        <span className="text-[11px] text-muted-foreground">Tap to see details</span>
+      </div>
+
+      <div className="mt-2 flex-1 space-y-3 overflow-y-auto px-5 pb-28 pt-1">
+        <QueueCard tone="free" name="SBI · 12th Main Branch" meta="Bank · 1.1 km" wait="3 min" trend="down" trendLabel="Quiet now" onClick={() => go("detail")} />
+        <QueueCard tone="free" name="Cult Fit Koramangala" meta="Gym · 1.8 km" wait="6 min" trend="down" trendLabel="Good time to go" onClick={() => go("detail")} />
         <QueueCard tone="medium" name="Third Wave Coffee" meta="Café · 0.4 km" wait="9 min" trend="up" trendLabel="Filling up" onClick={() => go("contribute")} />
-        <QueueCard tone="free" name="SBI · 12th Main Branch" meta="Bank · 1.1 km" wait="3 min" trend="down" trendLabel="Crowd easing" onClick={() => go("detail")} />
-        <QueueCard tone="free" name="Cult Fit Koramangala" meta="Gym · 1.8 km" wait="6 min" trend="down" trendLabel="Quiet hour" onClick={() => go("detail")} />
-        <QueueCard tone="medium" name="500D · Silk Board" meta="Bus · 0.2 km" wait="4 min" trend="up" trendLabel="ETA stable" onClick={() => go("transport")} />
+        <QueueCard tone="medium" name="500D · Silk Board" meta="Bus · 0.2 km" wait="4 min" trend="up" trendLabel="On schedule" onClick={() => go("transport")} />
+        <QueueCard tone="busy" name="Apollo Hospital" meta="Hospital · 2.3 km" wait="47 min" trend="up" trendLabel="Busy — try later" onClick={() => go("detail")} />
       </div>
 
       <TabBar active="home" />

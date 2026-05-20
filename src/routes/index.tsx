@@ -40,7 +40,7 @@ function App() {
   // auto-advance splash
   useEffect(() => {
     if (screen === "splash") {
-      const t = setTimeout(() => setStack(["onboarding"]), 1600);
+      const t = setTimeout(() => setStack(["onboarding"]), 1100);
       return () => clearTimeout(t);
     }
   }, [screen]);

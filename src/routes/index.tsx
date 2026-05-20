@@ -141,14 +141,13 @@ function SplashScreen() {
         <div className="relative">
           <div className="ql-pulse absolute inset-0 text-ink" />
           <div className="relative grid h-24 w-24 place-items-center rounded-3xl bg-ink text-paper">
-            <div className="h-3 w-3 rounded-full bg-paper" />
-            <div className="absolute inset-3 rounded-2xl border border-paper/30" />
-            <div className="absolute inset-6 rounded-xl border border-paper/15" />
+            <span className="font-display text-[44px] font-semibold leading-none tracking-tight text-paper">W</span>
+            <span className="absolute bottom-3 right-3 h-1.5 w-1.5 rounded-full bg-q-free-foreground" />
           </div>
         </div>
         <div className="text-center">
-          <h1 className="font-display text-[34px] font-semibold tracking-tight text-ink">QueueLess</h1>
-          <p className="mt-2 text-[14px] text-muted-foreground">Save time before you leave.</p>
+          <h1 className="font-display text-[34px] font-semibold tracking-tight text-ink">Waitless</h1>
+          <p className="mt-2 text-[14px] text-muted-foreground">Skip the line. Save your time.</p>
         </div>
       </div>
       <div className="flex flex-1 items-end">
@@ -175,10 +174,11 @@ function OnboardingScreen() {
     <div className="relative flex h-full flex-col bg-paper px-6 pb-8 pt-8">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="grid h-7 w-7 place-items-center rounded-[8px] bg-ink text-paper">
-            <div className="h-1.5 w-1.5 rounded-full bg-paper" />
+          <div className="relative grid h-8 w-8 place-items-center rounded-[10px] bg-ink text-paper">
+            <span className="font-display text-[15px] font-semibold leading-none text-paper">W</span>
+            <span className="absolute bottom-1 right-1 h-1 w-1 rounded-full bg-q-free-foreground" />
           </div>
-          <span className="font-display text-[16px] font-semibold tracking-tight text-ink">QueueLess</span>
+          <span className="font-display text-[16px] font-semibold tracking-tight text-ink">Waitless</span>
         </div>
         <button onClick={() => go("home")} className="text-[12px] font-medium text-muted-foreground">Skip</button>
       </div>
@@ -189,7 +189,7 @@ function OnboardingScreen() {
           Skip the wait.<br />Go when it's quiet.
         </h2>
         <p className="mt-3 text-[14px] leading-relaxed text-muted-foreground">
-          QueueLess shows live wait times for places around you — so you never stand in a long line again.
+          Waitless shows live wait times for places around you — so you never stand in a long line again.
         </p>
       </div>
 
@@ -1104,7 +1104,7 @@ function EmptyStatesScreen() {
         <EmptyCard
           icon={History}
           title="No recent activity"
-          body="Your check-ins and contributions will appear once you start using QueueLess."
+          body="Your check-ins and contributions will appear once you start using Waitless."
           cta="Make a check-in"
           tone="live"
         />
@@ -1158,7 +1158,7 @@ function FeedbackScreen() {
           <Check className="h-9 w-9 text-q-free-foreground" />
         </div>
         <h2 className="mt-5 font-display text-[26px] font-semibold leading-tight tracking-tight text-ink">You're done waiting.</h2>
-        <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">Thanks for using QueueLess at Third Wave Coffee.</p>
+        <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">Thanks for using Waitless at Third Wave Coffee.</p>
       </div>
 
       <div className="mt-8 rounded-[24px] bg-beige p-5">

@@ -174,10 +174,11 @@ function OnboardingScreen() {
     <div className="relative flex h-full flex-col bg-paper px-6 pb-8 pt-8">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="grid h-7 w-7 place-items-center rounded-[8px] bg-ink text-paper">
-            <div className="h-1.5 w-1.5 rounded-full bg-paper" />
+          <div className="relative grid h-8 w-8 place-items-center rounded-[10px] bg-ink text-paper">
+            <span className="font-display text-[15px] font-semibold leading-none text-paper">W</span>
+            <span className="absolute bottom-1 right-1 h-1 w-1 rounded-full bg-q-free-foreground" />
           </div>
-          <span className="font-display text-[16px] font-semibold tracking-tight text-ink">QueueLess</span>
+          <span className="font-display text-[16px] font-semibold tracking-tight text-ink">Waitless</span>
         </div>
         <button onClick={() => go("home")} className="text-[12px] font-medium text-muted-foreground">Skip</button>
       </div>
@@ -188,7 +189,7 @@ function OnboardingScreen() {
           Skip the wait.<br />Go when it's quiet.
         </h2>
         <p className="mt-3 text-[14px] leading-relaxed text-muted-foreground">
-          QueueLess shows live wait times for places around you — so you never stand in a long line again.
+          Waitless shows live wait times for places around you — so you never stand in a long line again.
         </p>
       </div>
 

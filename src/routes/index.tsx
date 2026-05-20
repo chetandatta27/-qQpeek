@@ -141,14 +141,13 @@ function SplashScreen() {
         <div className="relative">
           <div className="ql-pulse absolute inset-0 text-ink" />
           <div className="relative grid h-24 w-24 place-items-center rounded-3xl bg-ink text-paper">
-            <div className="h-3 w-3 rounded-full bg-paper" />
-            <div className="absolute inset-3 rounded-2xl border border-paper/30" />
-            <div className="absolute inset-6 rounded-xl border border-paper/15" />
+            <span className="font-display text-[44px] font-semibold leading-none tracking-tight text-paper">W</span>
+            <span className="absolute bottom-3 right-3 h-1.5 w-1.5 rounded-full bg-q-free-foreground" />
           </div>
         </div>
         <div className="text-center">
-          <h1 className="font-display text-[34px] font-semibold tracking-tight text-ink">QueueLess</h1>
-          <p className="mt-2 text-[14px] text-muted-foreground">Save time before you leave.</p>
+          <h1 className="font-display text-[34px] font-semibold tracking-tight text-ink">Waitless</h1>
+          <p className="mt-2 text-[14px] text-muted-foreground">Skip the line. Save your time.</p>
         </div>
       </div>
       <div className="flex flex-1 items-end">

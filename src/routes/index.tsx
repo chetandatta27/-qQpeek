@@ -442,7 +442,7 @@ function TabBar({ active }: { active: "home" | "map" | "alerts" | "me" }) {
     { id: "me", icon: Smile, label: "Me" },
   ] as const;
   return (
-    <div className="absolute inset-x-4 bottom-4 z-30 flex items-center justify-between rounded-full bg-ink px-3 py-2.5 text-paper ql-shadow">
+    <div className="absolute inset-x-4 bottom-4 z-30 flex items-center justify-between rounded-full bg-ink px-2 py-2 text-paper ql-shadow">
       {items.map(({ id, icon: Icon, label }) => {
         const isActive = id === active;
         return (
@@ -450,12 +450,12 @@ function TabBar({ active }: { active: "home" | "map" | "alerts" | "me" }) {
             key={id}
             onClick={() => go(id as Screen)}
             className={[
-              "flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[11px] font-medium transition-colors",
-              isActive ? "bg-paper text-ink" : "text-paper/70",
+              "flex flex-1 items-center justify-center gap-1.5 rounded-full px-3 py-2.5 text-[12px] font-semibold transition-colors",
+              isActive ? "bg-paper text-ink" : "text-paper/75",
             ].join(" ")}
           >
             <Icon className="h-4 w-4" />
-            {isActive && <span>{label}</span>}
+            <span>{label}</span>
           </button>
         );
       })}

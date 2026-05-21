@@ -75,11 +75,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: "LiveQ — See the wait before you go" },
       { name: "description", content: "LiveQ shows live wait times and crowd levels at hospitals, banks, cafés, gyms, transit and salons near you. Simple, large, and easy to read." },
       { name: "author", content: "LiveQ" },
-      { property: "og:title", content: "LiveQ — Live wait times & crowd levels near you" },
-      { property: "og:description", content: "Check live waits, crowd levels and AI predictions for places near you — in a calm, easy-to-read mobile app." },
+      { property: "og:title", content: "LiveQ — See the wait before you go" },
+      { property: "og:description", content: "LiveQ shows live wait times and crowd levels at hospitals, banks, cafés, gyms, transit and salons near you. Simple, large, and easy to read." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "LiveQ — See the wait before you go" },
+      { name: "twitter:description", content: "LiveQ shows live wait times and crowd levels at hospitals, banks, cafés, gyms, transit and salons near you. Simple, large, and easy to read." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/41913b10-ebfc-4a9e-a9b8-c55d8e3d2225/id-preview-6bbcfb37--ae7531fd-659c-42f3-9bbd-842b194b92de.lovable.app-1779343732571.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/41913b10-ebfc-4a9e-a9b8-c55d8e3d2225/id-preview-6bbcfb37--ae7531fd-659c-42f3-9bbd-842b194b92de.lovable.app-1779343732571.png" },
     ],
     links: [
       {

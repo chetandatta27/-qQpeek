@@ -147,8 +147,8 @@ function SplashScreen() {
           </div>
         </div>
         <div className="text-center">
-          <h1 className="font-display text-[34px] font-semibold tracking-tight text-ink">QueueLess</h1>
-          <p className="mt-2 text-[14px] text-muted-foreground">Save time before you leave.</p>
+          <h1 className="font-display text-[40px] font-semibold tracking-tight text-ink">LiveQ</h1>
+          <p className="mt-3 text-[15px] text-muted-foreground">See the wait before you go.</p>
         </div>
       </div>
       <div className="flex flex-1 items-end">

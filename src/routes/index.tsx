@@ -169,25 +169,25 @@ function OnboardingScreen() {
   const slides = [
     {
       tone: "live" as const,
-      eyebrow: "01 · Live data",
-      title: <>Check live waiting<br />times anywhere.</>,
-      body: "Real-time queues for hospitals, banks, cafés, gyms and transport near you.",
+      eyebrow: "Step 1 of 3",
+      title: <>See live wait<br />times near you.</>,
+      body: "Check how long the queue is — at hospitals, banks, cafés, gyms and bus stops nearby. Updated every few seconds.",
       art: (
         <>
           <div className="absolute left-6 top-6 rounded-2xl bg-paper p-3 ql-shadow">
             <div className="flex items-center gap-2">
               <Activity className="h-4 w-4 text-q-live-foreground" />
-              <span className="text-[11px] font-semibold text-ink">LIVE</span>
+              <span className="text-[12px] font-semibold text-ink">LIVE NOW</span>
             </div>
-            <div className="mt-2 text-[22px] font-semibold text-ink">12 min</div>
-            <div className="mt-2 h-1 w-24 rounded-full bg-q-live-foreground/40">
+            <div className="mt-2 text-[24px] font-semibold text-ink">12 min wait</div>
+            <div className="mt-2 h-1.5 w-28 rounded-full bg-q-live-foreground/40">
               <div className="ql-bar-anim h-full rounded-full bg-q-live-foreground" style={{ width: "55%" }} />
             </div>
           </div>
           <div className="absolute bottom-6 right-6 rounded-2xl bg-ink p-3 text-paper ql-shadow">
             <Users className="h-4 w-4" />
-            <div className="mt-1.5 text-[11px] font-medium opacity-70">Crowd</div>
-            <div className="text-[16px] font-semibold">Low</div>
+            <div className="mt-1.5 text-[12px] font-medium opacity-70">Crowd</div>
+            <div className="text-[18px] font-semibold">Low</div>
           </div>
           <div className="absolute right-10 top-10 grid h-12 w-12 place-items-center rounded-full bg-paper ql-shadow">
             <MapPin className="h-5 w-5 text-ink" />
@@ -197,45 +197,45 @@ function OnboardingScreen() {
     },
     {
       tone: "ai" as const,
-      eyebrow: "02 · AI prediction",
-      title: <>Predict crowds<br />before you arrive.</>,
-      body: "Our model forecasts the next 4 hours with 92% confidence for places near you.",
+      eyebrow: "Step 2 of 3",
+      title: <>Know the best<br />time to visit.</>,
+      body: "LiveQ predicts when a place will be quiet — so you can avoid the rush and skip long waits.",
       art: (
         <>
           <div className="absolute inset-x-6 top-7 rounded-2xl bg-paper p-3 ql-shadow">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-q-ai-foreground">Forecast</span>
-              <span className="text-[10px] font-medium text-muted-foreground">92% conf.</span>
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-q-ai-foreground">Quietest soon</span>
+              <span className="text-[11px] font-medium text-muted-foreground">92% sure</span>
             </div>
             <div className="mt-2 text-q-ai-foreground"><Sparkline tone="ai" /></div>
           </div>
           <div className="absolute bottom-6 left-6 rounded-2xl bg-ink p-3 text-paper ql-shadow">
             <Sparkles className="h-4 w-4" />
-            <div className="mt-1.5 text-[11px] font-medium opacity-70">Best in</div>
-            <div className="text-[16px] font-semibold">28 min</div>
+            <div className="mt-1.5 text-[12px] font-medium opacity-70">Best in</div>
+            <div className="text-[18px] font-semibold">28 min</div>
           </div>
         </>
       ),
     },
     {
       tone: "free" as const,
-      eyebrow: "03 · Nearby",
-      title: <>Find less crowded<br />places nearby.</>,
-      body: "We surface the calmest options around you, ranked by wait time and travel distance.",
+      eyebrow: "Step 3 of 3",
+      title: <>Easy to read<br />at a glance.</>,
+      body: "Green means short wait, orange means busy, red means very crowded. Just tap any card to see more.",
       art: (
         <>
           <div className="absolute left-6 top-6 rounded-2xl bg-paper p-3 ql-shadow">
-            <div className="flex items-center gap-2"><MapPin className="h-4 w-4 text-ink" /><span className="text-[11px] font-semibold text-ink">3 nearby</span></div>
+            <div className="flex items-center gap-2"><MapPin className="h-4 w-4 text-ink" /><span className="text-[12px] font-semibold text-ink">3 places nearby</span></div>
             <div className="mt-2 flex gap-1.5">
-              <span className="rounded-full bg-q-free-foreground/15 px-2 py-0.5 text-[10px] font-semibold text-q-free-foreground">3m</span>
-              <span className="rounded-full bg-q-medium-foreground/15 px-2 py-0.5 text-[10px] font-semibold text-q-medium-foreground">9m</span>
-              <span className="rounded-full bg-q-busy-foreground/15 px-2 py-0.5 text-[10px] font-semibold text-q-busy-foreground">47m</span>
+              <span className="rounded-full bg-q-free-foreground/15 px-2.5 py-1 text-[11px] font-semibold text-q-free-foreground">3 min</span>
+              <span className="rounded-full bg-q-medium-foreground/15 px-2.5 py-1 text-[11px] font-semibold text-q-medium-foreground">9 min</span>
+              <span className="rounded-full bg-q-busy-foreground/15 px-2.5 py-1 text-[11px] font-semibold text-q-busy-foreground">47 min</span>
             </div>
           </div>
           <div className="absolute bottom-6 right-6 rounded-2xl bg-ink p-3 text-paper ql-shadow">
             <Navigation className="h-4 w-4" />
-            <div className="mt-1.5 text-[11px] font-medium opacity-70">Walk</div>
-            <div className="text-[16px] font-semibold">6 min</div>
+            <div className="mt-1.5 text-[12px] font-medium opacity-70">Walk</div>
+            <div className="text-[18px] font-semibold">6 min</div>
           </div>
         </>
       ),

@@ -147,8 +147,8 @@ function SplashScreen() {
           </div>
         </div>
         <div className="text-center">
-          <h1 className="font-display text-[34px] font-semibold tracking-tight text-ink">QueueLess</h1>
-          <p className="mt-2 text-[14px] text-muted-foreground">Save time before you leave.</p>
+          <h1 className="font-display text-[40px] font-semibold tracking-tight text-ink">LiveQ</h1>
+          <p className="mt-3 text-[15px] text-muted-foreground">See the wait before you go.</p>
         </div>
       </div>
       <div className="flex flex-1 items-end">
@@ -169,25 +169,25 @@ function OnboardingScreen() {
   const slides = [
     {
       tone: "live" as const,
-      eyebrow: "01 · Live data",
-      title: <>Check live waiting<br />times anywhere.</>,
-      body: "Real-time queues for hospitals, banks, cafés, gyms and transport near you.",
+      eyebrow: "Step 1 of 3",
+      title: <>See live wait<br />times near you.</>,
+      body: "Check how long the queue is — at hospitals, banks, cafés, gyms and bus stops nearby. Updated every few seconds.",
       art: (
         <>
           <div className="absolute left-6 top-6 rounded-2xl bg-paper p-3 ql-shadow">
             <div className="flex items-center gap-2">
               <Activity className="h-4 w-4 text-q-live-foreground" />
-              <span className="text-[11px] font-semibold text-ink">LIVE</span>
+              <span className="text-[12px] font-semibold text-ink">LIVE NOW</span>
             </div>
-            <div className="mt-2 text-[22px] font-semibold text-ink">12 min</div>
-            <div className="mt-2 h-1 w-24 rounded-full bg-q-live-foreground/40">
+            <div className="mt-2 text-[24px] font-semibold text-ink">12 min wait</div>
+            <div className="mt-2 h-1.5 w-28 rounded-full bg-q-live-foreground/40">
               <div className="ql-bar-anim h-full rounded-full bg-q-live-foreground" style={{ width: "55%" }} />
             </div>
           </div>
           <div className="absolute bottom-6 right-6 rounded-2xl bg-ink p-3 text-paper ql-shadow">
             <Users className="h-4 w-4" />
-            <div className="mt-1.5 text-[11px] font-medium opacity-70">Crowd</div>
-            <div className="text-[16px] font-semibold">Low</div>
+            <div className="mt-1.5 text-[12px] font-medium opacity-70">Crowd</div>
+            <div className="text-[18px] font-semibold">Low</div>
           </div>
           <div className="absolute right-10 top-10 grid h-12 w-12 place-items-center rounded-full bg-paper ql-shadow">
             <MapPin className="h-5 w-5 text-ink" />
@@ -197,45 +197,45 @@ function OnboardingScreen() {
     },
     {
       tone: "ai" as const,
-      eyebrow: "02 · AI prediction",
-      title: <>Predict crowds<br />before you arrive.</>,
-      body: "Our model forecasts the next 4 hours with 92% confidence for places near you.",
+      eyebrow: "Step 2 of 3",
+      title: <>Know the best<br />time to visit.</>,
+      body: "LiveQ predicts when a place will be quiet — so you can avoid the rush and skip long waits.",
       art: (
         <>
           <div className="absolute inset-x-6 top-7 rounded-2xl bg-paper p-3 ql-shadow">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-q-ai-foreground">Forecast</span>
-              <span className="text-[10px] font-medium text-muted-foreground">92% conf.</span>
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-q-ai-foreground">Quietest soon</span>
+              <span className="text-[11px] font-medium text-muted-foreground">92% sure</span>
             </div>
             <div className="mt-2 text-q-ai-foreground"><Sparkline tone="ai" /></div>
           </div>
           <div className="absolute bottom-6 left-6 rounded-2xl bg-ink p-3 text-paper ql-shadow">
             <Sparkles className="h-4 w-4" />
-            <div className="mt-1.5 text-[11px] font-medium opacity-70">Best in</div>
-            <div className="text-[16px] font-semibold">28 min</div>
+            <div className="mt-1.5 text-[12px] font-medium opacity-70">Best in</div>
+            <div className="text-[18px] font-semibold">28 min</div>
           </div>
         </>
       ),
     },
     {
       tone: "free" as const,
-      eyebrow: "03 · Nearby",
-      title: <>Find less crowded<br />places nearby.</>,
-      body: "We surface the calmest options around you, ranked by wait time and travel distance.",
+      eyebrow: "Step 3 of 3",
+      title: <>Easy to read<br />at a glance.</>,
+      body: "Green means short wait, orange means busy, red means very crowded. Just tap any card to see more.",
       art: (
         <>
           <div className="absolute left-6 top-6 rounded-2xl bg-paper p-3 ql-shadow">
-            <div className="flex items-center gap-2"><MapPin className="h-4 w-4 text-ink" /><span className="text-[11px] font-semibold text-ink">3 nearby</span></div>
+            <div className="flex items-center gap-2"><MapPin className="h-4 w-4 text-ink" /><span className="text-[12px] font-semibold text-ink">3 places nearby</span></div>
             <div className="mt-2 flex gap-1.5">
-              <span className="rounded-full bg-q-free-foreground/15 px-2 py-0.5 text-[10px] font-semibold text-q-free-foreground">3m</span>
-              <span className="rounded-full bg-q-medium-foreground/15 px-2 py-0.5 text-[10px] font-semibold text-q-medium-foreground">9m</span>
-              <span className="rounded-full bg-q-busy-foreground/15 px-2 py-0.5 text-[10px] font-semibold text-q-busy-foreground">47m</span>
+              <span className="rounded-full bg-q-free-foreground/15 px-2.5 py-1 text-[11px] font-semibold text-q-free-foreground">3 min</span>
+              <span className="rounded-full bg-q-medium-foreground/15 px-2.5 py-1 text-[11px] font-semibold text-q-medium-foreground">9 min</span>
+              <span className="rounded-full bg-q-busy-foreground/15 px-2.5 py-1 text-[11px] font-semibold text-q-busy-foreground">47 min</span>
             </div>
           </div>
           <div className="absolute bottom-6 right-6 rounded-2xl bg-ink p-3 text-paper ql-shadow">
             <Navigation className="h-4 w-4" />
-            <div className="mt-1.5 text-[11px] font-medium opacity-70">Walk</div>
-            <div className="text-[16px] font-semibold">6 min</div>
+            <div className="mt-1.5 text-[12px] font-medium opacity-70">Walk</div>
+            <div className="text-[18px] font-semibold">6 min</div>
           </div>
         </>
       ),
@@ -253,9 +253,9 @@ function OnboardingScreen() {
           <div className="relative grid h-7 w-7 place-items-center rounded-[8px] bg-ink text-paper">
             <div className="h-1.5 w-1.5 rounded-full bg-paper" />
           </div>
-          <span className="font-display text-[16px] font-semibold tracking-tight text-ink">QueueLess</span>
+          <span className="font-display text-[18px] font-semibold tracking-tight text-ink">LiveQ</span>
         </div>
-        <button onClick={() => go("home")} className="text-[12px] font-medium text-muted-foreground">Skip</button>
+        <button onClick={() => go("home")} className="text-[13px] font-medium text-muted-foreground underline-offset-2 hover:underline">Skip intro</button>
       </div>
 
       <div className="mt-6 flex-1">
@@ -270,18 +270,18 @@ function OnboardingScreen() {
               <span key={i} className={i === step ? "h-1.5 w-6 rounded-full bg-ink" : "h-1.5 w-1.5 rounded-full bg-ink/20"} />
             ))}
           </div>
-          <div className="mt-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{s.eyebrow}</div>
-          <h2 className="mt-2 font-display text-[28px] font-semibold leading-[1.1] tracking-tight text-ink">{s.title}</h2>
-          <p className="mt-3 text-[13.5px] leading-relaxed text-muted-foreground">{s.body}</p>
+          <div className="mt-3 text-[12px] font-semibold uppercase tracking-wider text-muted-foreground">{s.eyebrow}</div>
+          <h2 className="mt-2 font-display text-[30px] font-semibold leading-[1.1] tracking-tight text-ink">{s.title}</h2>
+          <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">{s.body}</p>
         </div>
       </div>
 
       <button
         onClick={() => (isLast ? go("home") : setStep((n) => n + 1))}
-        className="mt-6 flex items-center justify-between rounded-2xl bg-ink px-5 py-4 text-paper active:scale-[0.98] transition-transform"
+        className="mt-6 flex items-center justify-between rounded-2xl bg-ink px-5 py-5 text-paper active:scale-[0.98] transition-transform"
       >
-        <span className="text-[14px] font-semibold">{isLast ? "Get started" : "Continue"}</span>
-        <ArrowRight className="h-4 w-4" />
+        <span className="text-[16px] font-semibold">{isLast ? "Start using LiveQ" : "Next"}</span>
+        <ArrowRight className="h-5 w-5" />
       </button>
     </div>
   );
@@ -308,9 +308,9 @@ function HomeScreen() {
           </div>
         </div>
 
-        <button onClick={() => go("search")} className="mt-4 flex w-full items-center gap-2 rounded-2xl bg-paper px-4 py-3 ql-ring active:bg-beige transition-colors">
-          <Search className="h-4 w-4 text-muted-foreground" />
-          <span className="text-[13px] text-muted-foreground">Search places, queues, transit…</span>
+        <button onClick={() => go("search")} className="mt-4 flex w-full items-center gap-3 rounded-2xl bg-paper px-4 py-4 ql-ring active:bg-beige transition-colors">
+          <Search className="h-5 w-5 text-muted-foreground" />
+          <span className="text-[15px] text-muted-foreground">Search a place, area or service</span>
         </button>
 
         <button onClick={() => go("live")} className="mt-3 flex w-full items-center justify-between rounded-2xl bg-ink px-4 py-3 text-paper ql-shadow active:scale-[0.99] transition-transform">
@@ -373,6 +373,15 @@ function HomeScreen() {
       </div>
 
       <div className="mt-2 flex-1 space-y-3 overflow-y-auto px-5 pb-28 pt-3">
+        <div className="rounded-2xl bg-paper p-4 ql-ring">
+          <div className="text-[12px] font-semibold uppercase tracking-wider text-muted-foreground">How to read this</div>
+          <div className="mt-2 flex flex-wrap items-center gap-2 text-[13px] text-ink">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-q-free px-2.5 py-1 font-medium text-q-free-foreground"><span className="h-2 w-2 rounded-full bg-q-free-foreground" /> Short wait</span>
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-q-medium px-2.5 py-1 font-medium text-q-medium-foreground"><span className="h-2 w-2 rounded-full bg-q-medium-foreground" /> Busy</span>
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-q-busy px-2.5 py-1 font-medium text-q-busy-foreground"><span className="h-2 w-2 rounded-full bg-q-busy-foreground" /> Very crowded</span>
+          </div>
+          <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">Tap any card below to see live details, walking time and the best time to visit.</p>
+        </div>
         <QueueCard tone="busy" name="Apollo Hospital" meta="Hospital · 2.3 km" wait="47 min" trend="up" trendLabel="Crowd increasing" onClick={() => go("detail")} />
         <QueueCard tone="medium" name="Third Wave Coffee" meta="Café · 0.4 km" wait="9 min" trend="up" trendLabel="Filling up" onClick={() => go("contribute")} />
         <QueueCard tone="free" name="SBI · 12th Main Branch" meta="Bank · 1.1 km" wait="3 min" trend="down" trendLabel="Crowd easing" onClick={() => go("detail")} />
@@ -433,7 +442,7 @@ function TabBar({ active }: { active: "home" | "map" | "alerts" | "me" }) {
     { id: "me", icon: Smile, label: "Me" },
   ] as const;
   return (
-    <div className="absolute inset-x-4 bottom-4 z-30 flex items-center justify-between rounded-full bg-ink px-3 py-2.5 text-paper ql-shadow">
+    <div className="absolute inset-x-4 bottom-4 z-30 flex items-center justify-between rounded-full bg-ink px-2 py-2 text-paper ql-shadow">
       {items.map(({ id, icon: Icon, label }) => {
         const isActive = id === active;
         return (
@@ -441,12 +450,12 @@ function TabBar({ active }: { active: "home" | "map" | "alerts" | "me" }) {
             key={id}
             onClick={() => go(id as Screen)}
             className={[
-              "flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[11px] font-medium transition-colors",
-              isActive ? "bg-paper text-ink" : "text-paper/70",
+              "flex flex-1 items-center justify-center gap-1.5 rounded-full px-3 py-2.5 text-[12px] font-semibold transition-colors",
+              isActive ? "bg-paper text-ink" : "text-paper/75",
             ].join(" ")}
           >
             <Icon className="h-4 w-4" />
-            {isActive && <span>{label}</span>}
+            <span>{label}</span>
           </button>
         );
       })}
@@ -1195,7 +1204,7 @@ function EmptyStatesScreen() {
         <EmptyCard
           icon={History}
           title="No recent activity"
-          body="Your check-ins and contributions will appear once you start using QueueLess."
+          body="Your check-ins and contributions will appear once you start using LiveQ."
           cta="Make a check-in"
           tone="live"
         />
@@ -1249,7 +1258,7 @@ function FeedbackScreen() {
           <Check className="h-9 w-9 text-q-free-foreground" />
         </div>
         <h2 className="mt-5 font-display text-[26px] font-semibold leading-tight tracking-tight text-ink">You're done waiting.</h2>
-        <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">Thanks for using QueueLess at Third Wave Coffee.</p>
+        <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">Thanks for using LiveQ at Third Wave Coffee.</p>
       </div>
 
       <div className="mt-8 rounded-[24px] bg-beige p-5">

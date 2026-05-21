@@ -76,7 +76,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "description", content: "LiveQ shows live wait times and crowd levels at hospitals, banks, cafés, gyms, transit and salons near you. Simple, large, and easy to read." },
       { name: "author", content: "LiveQ" },
       { property: "og:title", content: "LiveQ — Live wait times & crowd levels near you" },
-      { property: "og:description", content: "Live waits, AI predictions and crowd zones in a calm, minimal-brutalist mobile UI." },
+      { property: "og:description", content: "Check live waits, crowd levels and AI predictions for places near you — in a calm, easy-to-read mobile app." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },

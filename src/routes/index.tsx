@@ -308,9 +308,9 @@ function HomeScreen() {
           </div>
         </div>
 
-        <button onClick={() => go("search")} className="mt-4 flex w-full items-center gap-2 rounded-2xl bg-paper px-4 py-3 ql-ring active:bg-beige transition-colors">
-          <Search className="h-4 w-4 text-muted-foreground" />
-          <span className="text-[13px] text-muted-foreground">Search places, queues, transit…</span>
+        <button onClick={() => go("search")} className="mt-4 flex w-full items-center gap-3 rounded-2xl bg-paper px-4 py-4 ql-ring active:bg-beige transition-colors">
+          <Search className="h-5 w-5 text-muted-foreground" />
+          <span className="text-[15px] text-muted-foreground">Search a place, area or service</span>
         </button>
 
         <button onClick={() => go("live")} className="mt-3 flex w-full items-center justify-between rounded-2xl bg-ink px-4 py-3 text-paper ql-shadow active:scale-[0.99] transition-transform">

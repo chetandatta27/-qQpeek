@@ -253,9 +253,9 @@ function OnboardingScreen() {
           <div className="relative grid h-7 w-7 place-items-center rounded-[8px] bg-ink text-paper">
             <div className="h-1.5 w-1.5 rounded-full bg-paper" />
           </div>
-          <span className="font-display text-[16px] font-semibold tracking-tight text-ink">QueueLess</span>
+          <span className="font-display text-[18px] font-semibold tracking-tight text-ink">LiveQ</span>
         </div>
-        <button onClick={() => go("home")} className="text-[12px] font-medium text-muted-foreground">Skip</button>
+        <button onClick={() => go("home")} className="text-[13px] font-medium text-muted-foreground underline-offset-2 hover:underline">Skip intro</button>
       </div>
 
       <div className="mt-6 flex-1">
@@ -270,18 +270,18 @@ function OnboardingScreen() {
               <span key={i} className={i === step ? "h-1.5 w-6 rounded-full bg-ink" : "h-1.5 w-1.5 rounded-full bg-ink/20"} />
             ))}
           </div>
-          <div className="mt-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{s.eyebrow}</div>
-          <h2 className="mt-2 font-display text-[28px] font-semibold leading-[1.1] tracking-tight text-ink">{s.title}</h2>
-          <p className="mt-3 text-[13.5px] leading-relaxed text-muted-foreground">{s.body}</p>
+          <div className="mt-3 text-[12px] font-semibold uppercase tracking-wider text-muted-foreground">{s.eyebrow}</div>
+          <h2 className="mt-2 font-display text-[30px] font-semibold leading-[1.1] tracking-tight text-ink">{s.title}</h2>
+          <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">{s.body}</p>
         </div>
       </div>
 
       <button
         onClick={() => (isLast ? go("home") : setStep((n) => n + 1))}
-        className="mt-6 flex items-center justify-between rounded-2xl bg-ink px-5 py-4 text-paper active:scale-[0.98] transition-transform"
+        className="mt-6 flex items-center justify-between rounded-2xl bg-ink px-5 py-5 text-paper active:scale-[0.98] transition-transform"
       >
-        <span className="text-[14px] font-semibold">{isLast ? "Get started" : "Continue"}</span>
-        <ArrowRight className="h-4 w-4" />
+        <span className="text-[16px] font-semibold">{isLast ? "Start using LiveQ" : "Next"}</span>
+        <ArrowRight className="h-5 w-5" />
       </button>
     </div>
   );

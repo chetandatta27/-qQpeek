@@ -373,6 +373,15 @@ function HomeScreen() {
       </div>
 
       <div className="mt-2 flex-1 space-y-3 overflow-y-auto px-5 pb-28 pt-3">
+        <div className="rounded-2xl bg-paper p-4 ql-ring">
+          <div className="text-[12px] font-semibold uppercase tracking-wider text-muted-foreground">How to read this</div>
+          <div className="mt-2 flex flex-wrap items-center gap-2 text-[13px] text-ink">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-q-free px-2.5 py-1 font-medium text-q-free-foreground"><span className="h-2 w-2 rounded-full bg-q-free-foreground" /> Short wait</span>
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-q-medium px-2.5 py-1 font-medium text-q-medium-foreground"><span className="h-2 w-2 rounded-full bg-q-medium-foreground" /> Busy</span>
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-q-busy px-2.5 py-1 font-medium text-q-busy-foreground"><span className="h-2 w-2 rounded-full bg-q-busy-foreground" /> Very crowded</span>
+          </div>
+          <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">Tap any card below to see live details, walking time and the best time to visit.</p>
+        </div>
         <QueueCard tone="busy" name="Apollo Hospital" meta="Hospital · 2.3 km" wait="47 min" trend="up" trendLabel="Crowd increasing" onClick={() => go("detail")} />
         <QueueCard tone="medium" name="Third Wave Coffee" meta="Café · 0.4 km" wait="9 min" trend="up" trendLabel="Filling up" onClick={() => go("contribute")} />
         <QueueCard tone="free" name="SBI · 12th Main Branch" meta="Bank · 1.1 km" wait="3 min" trend="down" trendLabel="Crowd easing" onClick={() => go("detail")} />

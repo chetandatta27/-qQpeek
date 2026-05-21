@@ -1204,7 +1204,7 @@ function EmptyStatesScreen() {
         <EmptyCard
           icon={History}
           title="No recent activity"
-          body="Your check-ins and contributions will appear once you start using QueueLess."
+          body="Your check-ins and contributions will appear once you start using LiveQ."
           cta="Make a check-in"
           tone="live"
         />
@@ -1258,7 +1258,7 @@ function FeedbackScreen() {
           <Check className="h-9 w-9 text-q-free-foreground" />
         </div>
         <h2 className="mt-5 font-display text-[26px] font-semibold leading-tight tracking-tight text-ink">You're done waiting.</h2>
-        <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">Thanks for using QueueLess at Third Wave Coffee.</p>
+        <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">Thanks for using LiveQ at Third Wave Coffee.</p>
       </div>
 
       <div className="mt-8 rounded-[24px] bg-beige p-5">

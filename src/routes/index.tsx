@@ -976,3 +976,23 @@ function SavedScreen({ saved, onOpen, onRemove, onBrowse }: { saved: Set<string>
     </div>
   );
 }
+
+function SavedCard({ place, onOpen, onRemove }: { place: Place; onOpen: () => void; onRemove: () => void }) {
+  const lp = useRef<number | null>(null);
+  return (
+    <button
+      onClick={onOpen}
+      onTouchStart={() => { lp.current = window.setTimeout(onRemove, 600); }}
+      onTouchEnd={() => { if (lp.current) { clearTimeout(lp.current); lp.current = null; } }}
+      className="lq-card p-3 text-left"
+    >
+      <div className="flex items-start justify-between">
+        <CategoryIcon cat={place.category} />
+        <WaitBadge wait={place.wait} />
+      </div>
+      <div className="mt-2 font-semibold text-[13px] truncate">{place.name}</div>
+      <div className="text-[11px] text-muted-foreground truncate">{place.category} · {place.distance}</div>
+      <div className="mt-2"><CrowdBar pct={place.crowd} /></div>
+    </button>
+  );
+}

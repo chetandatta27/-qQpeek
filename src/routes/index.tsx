@@ -968,26 +968,9 @@ function SavedScreen({ saved, onOpen, onRemove, onBrowse }: { saved: Set<string>
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-3 mt-4">
-          {list.map((p) => {
-            const lp = useRef<number | null>(null);
-            return (
-              <button
-                key={p.id}
-                onClick={() => onOpen(p.id)}
-                onTouchStart={() => { lp.current = window.setTimeout(() => onRemove(p.id), 600); }}
-                onTouchEnd={() => { if (lp.current) clearTimeout(lp.current); }}
-                className="lq-card p-3 text-left"
-              >
-                <div className="flex items-start justify-between">
-                  <CategoryIcon cat={p.category} />
-                  <WaitBadge wait={p.wait} />
-                </div>
-                <div className="mt-2 font-semibold text-[13px] truncate">{p.name}</div>
-                <div className="text-[11px] text-muted-foreground truncate">{p.category} · {p.distance}</div>
-                <div className="mt-2"><CrowdBar pct={p.crowd} /></div>
-              </button>
-            );
-          })}
+          {list.map((p) => (
+            <SavedCard key={p.id} place={p} onOpen={() => onOpen(p.id)} onRemove={() => onRemove(p.id)} />
+          ))}
         </div>
       )}
     </div>

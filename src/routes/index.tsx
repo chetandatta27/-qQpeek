@@ -1,998 +1,883 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  Home as IconHome,
-  Map as IconMap,
-  Bell,
-  Bookmark,
-  Search,
-  X,
-  ChevronLeft,
-  MapPin,
-  RefreshCw,
-  TrendingUp,
-  TrendingDown,
-  Minus,
-  Heart,
-  Phone,
-  Navigation,
-  Check,
-  Trash2,
-  Plus,
-  Minus as IconMinus,
+  Home as IconHome, Map as IconMap, Bell, Bookmark, User as IconUser,
+  Search, X, ChevronLeft, MapPin, RefreshCw, TrendingUp, TrendingDown,
+  Minus, Heart, Phone, Navigation, Check, Trash2, Plus, Star, Clock,
+  Sparkles, Share2, AlertCircle, Activity, Zap, ChevronRight, Filter,
 } from "lucide-react";
 
 export const Route = createFileRoute("/")({ component: App });
 
-/* ------------------------------ DATA ------------------------------ */
-
+/* ============================== DATA ============================== */
 type Trend = "up" | "down" | "stable";
-type Category = "Hospital" | "Bank" | "Gym" | "Café" | "Transit" | "Salon" | "Supermarket";
-
+type Category = "Hospital" | "Bank" | "Café" | "Restaurant" | "Gym" | "Pharmacy" | "Shopping" | "Govt";
 type Place = {
-  id: string;
-  name: string;
-  category: Category;
-  distance: string;
-  distanceNum: number;
-  wait: number;
-  crowd: number;
-  trend: Trend;
-  hours: string;
-  address: string;
-  phone: string;
-  reports: number;
-  reportedAgo: number; // minutes
+  id: string; name: string; category: Category; emoji: string;
+  distance: string; distanceNum: number; wait: number; crowd: number;
+  trend: Trend; open: boolean; closes: string; rating: number;
+  address: string; phone: string; reports: number;
 };
 
-const CATEGORIES: { key: Category | "All"; emoji: string; label: string }[] = [
-  { key: "All", emoji: "✨", label: "All" },
-  { key: "Hospital", emoji: "🏥", label: "Hospital" },
-  { key: "Bank", emoji: "🏦", label: "Bank" },
-  { key: "Gym", emoji: "💪", label: "Gym" },
-  { key: "Café", emoji: "☕", label: "Café" },
-  { key: "Transit", emoji: "🚌", label: "Transit" },
-  { key: "Salon", emoji: "✂️", label: "Salon" },
+const CATS: { key: Category | "All"; label: string; emoji: string }[] = [
+  { key: "All", label: "All", emoji: "✦" },
+  { key: "Hospital", label: "Hospital", emoji: "🏥" },
+  { key: "Bank", label: "Bank", emoji: "🏦" },
+  { key: "Café", label: "Café", emoji: "☕" },
+  { key: "Restaurant", label: "Restaurant", emoji: "🍽️" },
+  { key: "Gym", label: "Gym", emoji: "💪" },
+  { key: "Pharmacy", label: "Pharmacy", emoji: "💊" },
+  { key: "Shopping", label: "Shopping", emoji: "🛍️" },
+  { key: "Govt", label: "Govt", emoji: "🏛️" },
 ];
 
-const PLACES: Place[] = [
-  { id: "p1", name: "Apollo Hospital", category: "Hospital", distance: "0.8 km", distanceNum: 0.8, wait: 28, crowd: 72, trend: "up", hours: "Open 24 hrs", address: "Jubilee Hills, Hyderabad", phone: "+91 40 2360 7777", reports: 18, reportedAgo: 5 },
-  { id: "p2", name: "Axis Bank", category: "Bank", distance: "1.2 km", distanceNum: 1.2, wait: 12, crowd: 45, trend: "down", hours: "Open · closes 5 PM", address: "Banjara Hills Rd 12", phone: "+91 40 6611 2233", reports: 9, reportedAgo: 3 },
-  { id: "p3", name: "FitZone Gym", category: "Gym", distance: "0.5 km", distanceNum: 0.5, wait: 3, crowd: 18, trend: "down", hours: "Open · closes 10 PM", address: "Madhapur Main Rd", phone: "+91 90000 12121", reports: 22, reportedAgo: 2 },
-  { id: "p4", name: "Café Coffee Day", category: "Café", distance: "0.3 km", distanceNum: 0.3, wait: 5, crowd: 30, trend: "stable", hours: "Open · closes 11 PM", address: "HITEC City Phase 2", phone: "+91 40 1234 5678", reports: 12, reportedAgo: 6 },
-  { id: "p5", name: "SBI Bank", category: "Bank", distance: "2.1 km", distanceNum: 2.1, wait: 35, crowd: 85, trend: "up", hours: "Open · closes 4 PM", address: "Ameerpet Branch", phone: "+91 40 2374 5566", reports: 24, reportedAgo: 4 },
-  { id: "p6", name: "Manipal Hospital", category: "Hospital", distance: "3.4 km", distanceNum: 3.4, wait: 8, crowd: 25, trend: "down", hours: "Open 24 hrs", address: "Tadbund X Rd", phone: "+91 40 6600 0000", reports: 7, reportedAgo: 9 },
-  { id: "p7", name: "Gold's Gym", category: "Gym", distance: "1.8 km", distanceNum: 1.8, wait: 0, crowd: 10, trend: "stable", hours: "Open · closes 10 PM", address: "Kondapur", phone: "+91 90000 22233", reports: 5, reportedAgo: 11 },
-  { id: "p8", name: "Starbucks", category: "Café", distance: "0.9 km", distanceNum: 0.9, wait: 7, crowd: 55, trend: "up", hours: "Open · closes 10 PM", address: "Inorbit Mall", phone: "+91 40 4455 7788", reports: 14, reportedAgo: 1 },
+const SEED: Place[] = [
+  { id: "p1", name: "Apollo Hospital", category: "Hospital", emoji: "🏥", distance: "1.2 km", distanceNum: 1.2, wait: 28, crowd: 78, trend: "up", open: true, closes: "24h", rating: 4.6, address: "Jubilee Hills, Hyderabad", phone: "+914023607777", reports: 18 },
+  { id: "p2", name: "HDFC Bank — Banjara", category: "Bank", emoji: "🏦", distance: "0.6 km", distanceNum: 0.6, wait: 12, crowd: 42, trend: "down", open: true, closes: "4:00 PM", rating: 4.2, address: "Road No. 12, Banjara Hills", phone: "+914023456789", reports: 9 },
+  { id: "p3", name: "Roastery Coffee House", category: "Café", emoji: "☕", distance: "0.4 km", distanceNum: 0.4, wait: 5, crowd: 28, trend: "stable", open: true, closes: "11:00 PM", rating: 4.8, address: "Road No. 36, Jubilee Hills", phone: "+919876543210", reports: 14 },
+  { id: "p4", name: "FitZone Gym", category: "Gym", emoji: "💪", distance: "0.9 km", distanceNum: 0.9, wait: 3, crowd: 22, trend: "down", open: true, closes: "10:00 PM", rating: 4.5, address: "Madhapur Main Rd", phone: "+919812345678", reports: 6 },
+  { id: "p5", name: "MedPlus Pharmacy", category: "Pharmacy", emoji: "💊", distance: "0.3 km", distanceNum: 0.3, wait: 4, crowd: 31, trend: "stable", open: true, closes: "11:00 PM", rating: 4.4, address: "Filmnagar", phone: "+914049000000", reports: 11 },
+  { id: "p6", name: "Paradise Biryani", category: "Restaurant", emoji: "🍽️", distance: "2.1 km", distanceNum: 2.1, wait: 35, crowd: 88, trend: "up", open: true, closes: "11:30 PM", rating: 4.3, address: "Secunderabad", phone: "+914027840000", reports: 24 },
+  { id: "p7", name: "Inorbit Mall", category: "Shopping", emoji: "🛍️", distance: "3.4 km", distanceNum: 3.4, wait: 0, crowd: 55, trend: "stable", open: true, closes: "10:00 PM", rating: 4.4, address: "Cyberabad", phone: "+914040000000", reports: 7 },
+  { id: "p8", name: "RTA Office", category: "Govt", emoji: "🏛️", distance: "4.0 km", distanceNum: 4.0, wait: 52, crowd: 92, trend: "up", open: true, closes: "5:00 PM", rating: 3.4, address: "Khairatabad", phone: "+914023220000", reports: 31 },
 ];
 
-const CATEGORY_EMOJI: Record<Category, string> =
-  { Hospital: "🏥", Bank: "🏦", Gym: "💪", Café: "☕", Transit: "🚌", Salon: "✂️", Supermarket: "🛒" };
+const HOURLY = [22, 30, 45, 60, 72, 55, 40, 38, 50, 70, 82, 65, 48];
+const HOURS = ["9a","10a","11a","12p","1p","2p","3p","4p","5p","6p","7p","8p","9p"];
+const CURRENT_HOUR_IDX = 5;
 
-/* ----------------------------- HELPERS ---------------------------- */
-
-function waitLevel(w: number) {
-  if (w <= 14) return "free" as const;
-  if (w <= 29) return "medium" as const;
-  return "busy" as const;
+/* ========================== UTILITIES ========================== */
+function waitColor(w: number) {
+  if (w === 0) return { bg: "var(--q-free-bg)", text: "var(--q-free-text)", solid: "var(--q-free)" };
+  if (w < 15) return { bg: "var(--q-free-bg)", text: "var(--q-free-text)", solid: "var(--q-free)" };
+  if (w < 30) return { bg: "var(--q-medium-bg)", text: "var(--q-medium-text)", solid: "var(--q-medium)" };
+  return { bg: "var(--q-busy-bg)", text: "var(--q-busy-text)", solid: "var(--q-busy)" };
 }
-function crowdLevel(c: number) {
-  if (c < 40) return "free" as const;
-  if (c < 70) return "medium" as const;
-  return "busy" as const;
-}
-function levelClasses(l: "free" | "medium" | "busy") {
-  if (l === "free") return { bg: "bg-q-free-bg", text: "text-q-free-text", fill: "bg-q-free", solid: "#22c55e" };
-  if (l === "medium") return { bg: "bg-q-medium-bg", text: "text-q-medium-text", fill: "bg-q-medium", solid: "#f59e0b" };
-  return { bg: "bg-q-busy-bg", text: "text-q-busy-text", fill: "bg-q-busy", solid: "#ef4444" };
-}
-function statusLabel(c: number) {
+function crowdLabel(c: number) {
   if (c < 40) return "Quiet";
   if (c < 70) return "Moderate";
-  if (c < 85) return "Busy";
-  return "Very Busy";
+  return "Busy";
+}
+function trendIcon(t: Trend) {
+  if (t === "up") return <TrendingUp className="w-3.5 h-3.5" />;
+  if (t === "down") return <TrendingDown className="w-3.5 h-3.5" />;
+  return <Minus className="w-3.5 h-3.5" />;
 }
 
-/* ----------------------------- TOAST ------------------------------ */
-
-let toastSeq = 0;
-type Toast = { id: number; msg: string };
-function useToasts() {
-  const [toasts, setToasts] = useState<Toast[]>([]);
-  function push(msg: string) {
-    const id = ++toastSeq;
-    setToasts((t) => [...t, { id, msg }]);
-    setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 3000);
-    if (typeof navigator !== "undefined" && "vibrate" in navigator) navigator.vibrate?.(15);
-  }
-  return { toasts, push };
-}
-
-/* ------------------------------ APP ------------------------------- */
-
-type Tab = "home" | "map" | "alerts" | "saved";
-type Alert = { id: string; placeId: string; threshold: number; alsoBusy: boolean; daily: boolean; enabled: boolean };
+/* ============================== APP ============================== */
+type Stage = "splash" | "onboarding" | "app";
+type Tab = "home" | "explore" | "alerts" | "saved" | "profile";
 
 function App() {
+  const [stage, setStage] = useState<Stage>("splash");
+  const [obStep, setObStep] = useState(0);
   const [tab, setTab] = useState<Tab>("home");
-  const [detailId, setDetailId] = useState<string | null>(null);
-  const [saved, setSaved] = useState<Set<string>>(new Set(["p3"]));
-  const [alerts, setAlerts] = useState<Alert[]>([
-    { id: "a1", placeId: "p1", threshold: 15, alsoBusy: true, daily: false, enabled: true },
+  const [places, setPlaces] = useState<Place[]>(SEED);
+  const [saved, setSaved] = useState<Set<string>>(new Set(["p3", "p4"]));
+  const [alerts, setAlerts] = useState<{ id: string; placeId: string; threshold: number; on: boolean }[]>([
+    { id: "a1", placeId: "p1", threshold: 15, on: true },
   ]);
-  const [triggered, setTriggered] = useState<{ id: string; placeId: string; wait: number; at: string } | null>(
-    { id: "t1", placeId: "p3", wait: 3, at: "Just now" }
-  );
-  const [lastRefresh, setLastRefresh] = useState(Date.now());
-  const [refreshing, setRefreshing] = useState(false);
-  const { toasts, push } = useToasts();
+  const [detail, setDetail] = useState<string | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+  const [alertModalFor, setAlertModalFor] = useState<string | null>(null);
 
-  // auto-refresh
   useEffect(() => {
-    const t = setInterval(() => setLastRefresh(Date.now()), 60000);
-    return () => clearInterval(t);
+    const t1 = setTimeout(() => setStage("onboarding"), 1900);
+    return () => clearTimeout(t1);
+  }, []);
+
+  useEffect(() => {
+    const i = setInterval(() => {
+      setPlaces(p => p.map(x => ({ ...x, wait: Math.max(0, x.wait + Math.round((Math.random() - 0.5) * 4)) })));
+    }, 60000);
+    return () => clearInterval(i);
+  }, []);
+
+  function showToast(m: string) { setToast(m); setTimeout(() => setToast(null), 2600); }
+  function toggleSave(id: string) {
+    setSaved(s => { const n = new Set(s); if (n.has(id)) { n.delete(id); showToast("Removed from Saved"); } else { n.add(id); showToast("❤ Saved"); } return n; });
+  }
+  function addAlert(placeId: string, threshold: number) {
+    setAlerts(a => [...a, { id: `a${Date.now()}`, placeId, threshold, on: true }]);
+    const p = places.find(x => x.id === placeId);
+    showToast(`🔔 Alert set for ${p?.name}`);
+  }
+
+  const detailPlace = detail ? places.find(p => p.id === detail) : null;
+
+  return (
+    <div className="min-h-screen w-full flex items-stretch justify-center" style={{ background: "#0B0B0B" }}>
+      <div className="relative w-full max-w-[430px] min-h-screen overflow-hidden" style={{ background: "var(--color-background)" }}>
+        {stage === "splash" && <Splash />}
+        {stage === "onboarding" && (
+          <Onboarding step={obStep} onNext={() => setObStep(s => s + 1)} onDone={() => setStage("app")} />
+        )}
+        {stage === "app" && (
+          <>
+            <div className="pb-[88px]">
+              {tab === "home" && <HomeScreen places={places} saved={saved} toggleSave={toggleSave} openDetail={setDetail} showToast={showToast} />}
+              {tab === "explore" && <ExploreScreen places={places} openDetail={setDetail} />}
+              {tab === "alerts" && <AlertsScreen alerts={alerts} places={places} setAlerts={setAlerts} openDetail={setDetail} switchTab={setTab} showToast={showToast} />}
+              {tab === "saved" && <SavedScreen places={places} saved={saved} toggleSave={toggleSave} openDetail={setDetail} switchTab={setTab} />}
+              {tab === "profile" && <ProfileScreen savedCount={saved.size} alertCount={alerts.length} />}
+            </div>
+            <BottomNav tab={tab} setTab={setTab} alertCount={alerts.filter(a => a.on).length} savedCount={saved.size} />
+          </>
+        )}
+
+        {detailPlace && (
+          <Detail place={detailPlace} saved={saved.has(detailPlace.id)} onClose={() => setDetail(null)} onToggleSave={() => toggleSave(detailPlace.id)} onAlert={() => setAlertModalFor(detailPlace.id)} showToast={showToast} />
+        )}
+        {alertModalFor && (
+          <AlertModal place={places.find(p => p.id === alertModalFor)!} onClose={() => setAlertModalFor(null)} onSet={(th) => { addAlert(alertModalFor, th); setAlertModalFor(null); }} />
+        )}
+        {toast && (
+          <div className="wl-toast fixed bottom-[104px] left-1/2 z-[120] px-4 py-2.5 rounded-full text-[13px] font-medium" style={{ background: "var(--color-primary)", color: "var(--color-primary-foreground)" }}>
+            {toast}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ============================ SPLASH ============================ */
+function Splash() {
+  return (
+    <div className="absolute inset-0 flex flex-col items-center justify-center" style={{ background: "var(--color-background)" }}>
+      <div className="wl-logo-in flex flex-col items-center">
+        <div className="w-20 h-20 rounded-[26px] flex items-center justify-center mb-6" style={{ background: "var(--color-primary)" }}>
+          <div className="relative">
+            <div className="w-9 h-9 rounded-full border-[3px]" style={{ borderColor: "#F7F5EF", borderRightColor: "transparent" }} />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 rounded-full" style={{ background: "var(--color-accent)" }} />
+          </div>
+        </div>
+        <div className="text-[34px] font-extrabold tracking-tight">WaitLess</div>
+        <div className="serif-italic text-[18px] mt-2" style={{ color: "var(--color-muted-foreground)" }}>
+          Skip the wait. Go when it's quiet.
+        </div>
+      </div>
+      <div className="absolute bottom-12 flex gap-1.5">
+        {[0,1,2].map(i => <div key={i} className="w-1.5 h-1.5 rounded-full wl-dot-pulse" style={{ background: "var(--color-primary)", animationDelay: `${i*0.18}s` }} />)}
+      </div>
+    </div>
+  );
+}
+
+/* ========================== ONBOARDING ========================== */
+function Onboarding({ step, onNext, onDone }: { step: number; onNext: () => void; onDone: () => void }) {
+  const slides = [
+    { tag: "Real-time", title: "See the crowd, before you go", body: "Live wait times and crowd levels at hospitals, banks, cafés, gyms and more — updated every minute by people like you.", emoji: "📡" },
+    { tag: "Predictive", title: "AI predicts the best time", body: "We forecast the next 12 hours so you can choose the quietest window for your visit.", emoji: "🧠" },
+    { tag: "Smart alerts", title: "We tell you when it's clear", body: "Set a wait threshold once. We'll ping you the moment it drops — no more refreshing.", emoji: "🔔" },
+    { tag: "Your time back", title: "Save hours every week", body: "An average WaitLess user reclaims 3h 20m a week. That's a whole movie. Every single week.", emoji: "⏳" },
+  ];
+  const last = step >= slides.length - 1;
+  const s = slides[Math.min(step, slides.length - 1)];
+
+  return (
+    <div className="absolute inset-0 flex flex-col px-6 pt-16 pb-10 wl-fade-up" key={step}>
+      <div className="flex items-center justify-between mb-12">
+        <span className="text-[11px] font-semibold tracking-[0.2em] uppercase" style={{ color: "var(--color-muted-foreground)" }}>{s.tag}</span>
+        <button onClick={onDone} className="text-[13px] font-medium" style={{ color: "var(--color-muted-foreground)" }}>Skip</button>
+      </div>
+      <div className="flex-1 flex flex-col items-center justify-center text-center">
+        <div className="w-28 h-28 rounded-[32px] flex items-center justify-center text-[56px] mb-10 wl-shadow-lg" style={{ background: "var(--color-card)" }}>{s.emoji}</div>
+        <h1 className="text-[32px] leading-[1.1] font-bold max-w-[320px]">{s.title}</h1>
+        <p className="serif-italic text-[18px] mt-4 max-w-[320px]" style={{ color: "var(--color-muted-foreground)" }}>{s.body}</p>
+      </div>
+      <div className="flex justify-center gap-2 mb-8">
+        {slides.map((_, i) => (
+          <div key={i} className="h-1.5 rounded-full transition-all" style={{ width: i === step ? 28 : 8, background: i === step ? "var(--color-primary)" : "var(--color-border)" }} />
+        ))}
+      </div>
+      <button onClick={() => (last ? onDone() : onNext())} className="w-full h-14 rounded-2xl text-[15px] font-semibold" style={{ background: "var(--color-primary)", color: "var(--color-primary-foreground)" }}>
+        {last ? "Get started" : "Continue"}
+      </button>
+    </div>
+  );
+}
+
+/* =========================== HOME =========================== */
+function HomeScreen({ places, saved, toggleSave, openDetail, showToast }: {
+  places: Place[]; saved: Set<string>; toggleSave: (id: string) => void;
+  openDetail: (id: string) => void; showToast: (m: string) => void;
+}) {
+  const [q, setQ] = useState("");
+  const [cat, setCat] = useState<Category | "All">("All");
+  const [refreshing, setRefreshing] = useState(false);
+  const [updated, setUpdated] = useState("just now");
+
+  useEffect(() => {
+    const i = setInterval(() => setUpdated(t => t === "just now" ? "1 min ago" : "2 min ago"), 60000);
+    return () => clearInterval(i);
   }, []);
 
   function refresh() {
     setRefreshing(true);
-    setTimeout(() => {
-      setRefreshing(false);
-      setLastRefresh(Date.now());
-      push("Updated just now");
-    }, 700);
+    setTimeout(() => { setRefreshing(false); setUpdated("just now"); showToast("Updated"); }, 1100);
   }
 
-  function toggleSave(id: string) {
-    setSaved((s) => {
-      const n = new Set(s);
-      if (n.has(id)) { n.delete(id); push("Removed from saved"); }
-      else { n.add(id); push("✅ Saved to your list"); }
-      return n;
-    });
-  }
+  const filtered = useMemo(() => places.filter(p =>
+    (cat === "All" || p.category === cat) &&
+    (q === "" || p.name.toLowerCase().includes(q.toLowerCase()))
+  ), [places, cat, q]);
 
-  function setAlertFor(placeId: string, threshold: number, alsoBusy: boolean, daily: boolean) {
-    const p = PLACES.find((x) => x.id === placeId)!;
-    setAlerts((a) => {
-      const existing = a.find((x) => x.placeId === placeId);
-      if (existing) return a.map((x) => x.placeId === placeId ? { ...x, threshold, alsoBusy, daily, enabled: true } : x);
-      return [...a, { id: `a${Date.now()}`, placeId, threshold, alsoBusy, daily, enabled: true }];
-    });
-    push(`🔔 Alert set for ${p.name}`);
-  }
-
-  const detailPlace = detailId ? PLACES.find((p) => p.id === detailId) ?? null : null;
+  const aiPick = useMemo(() => [...places].sort((a, b) => a.wait - b.wait)[0], [places]);
+  const trending = useMemo(() => [...places].sort((a,b) => b.reports - a.reports).slice(0, 4), [places]);
+  const hour = new Date().getHours();
+  const greet = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
 
   return (
-    <div className="min-h-screen w-full bg-background flex justify-center">
-      <div className="relative w-full max-w-[430px] min-h-screen bg-background pb-24 overflow-hidden">
-        {/* Detail overlay */}
-        {detailPlace && (
-          <PlaceDetail
-            place={detailPlace}
-            onBack={() => setDetailId(null)}
-            saved={saved.has(detailPlace.id)}
-            onSave={() => toggleSave(detailPlace.id)}
-            onSetAlert={(t, ab, d) => setAlertFor(detailPlace.id, t, ab, d)}
-            onReport={() => push("Thanks for your report!")}
-          />
-        )}
-
-        {!detailPlace && (
-          <>
-            {tab === "home" && (
-              <HomeScreen
-                onOpen={setDetailId}
-                onSave={toggleSave}
-                saved={saved}
-                lastRefresh={lastRefresh}
-                refreshing={refreshing}
-                onRefresh={refresh}
-              />
-            )}
-            {tab === "map" && <MapScreen onOpen={setDetailId} />}
-            {tab === "alerts" && (
-              <AlertsScreen
-                alerts={alerts}
-                setAlerts={setAlerts}
-                triggered={triggered}
-                dismissTriggered={() => setTriggered(null)}
-                onOpen={setDetailId}
-              />
-            )}
-            {tab === "saved" && (
-              <SavedScreen saved={saved} onOpen={setDetailId} onRemove={toggleSave} onBrowse={() => setTab("home")} />
-            )}
-          </>
-        )}
-
-        {!detailPlace && <TabBar tab={tab} setTab={setTab} alertCount={alerts.filter((a) => a.enabled).length} />}
-
-        {/* Toasts */}
-        <div className="fixed bottom-28 left-1/2 z-[100] flex flex-col items-center gap-2 pointer-events-none" style={{ transform: "translateX(-50%)" }}>
-          {toasts.map((t) => (
-            <div key={t.id} className="lq-toast bg-foreground text-background text-[13px] font-medium px-4 py-2.5 rounded-full lq-shadow-lg whitespace-nowrap">
-              {t.msg}
-            </div>
-          ))}
+    <div className="px-5 pt-12">
+      {/* Header */}
+      <div className="flex items-start justify-between mb-6">
+        <div>
+          <div className="text-[13px]" style={{ color: "var(--color-muted-foreground)" }}>{greet}</div>
+          <div className="text-[26px] font-bold leading-tight">Where to, today?</div>
+          <button onClick={refresh} className="mt-1 inline-flex items-center gap-1.5 text-[11px]" style={{ color: "var(--color-muted-foreground)" }}>
+            <RefreshCw className={`w-3 h-3 ${refreshing ? "wl-spin" : ""}`} /> Updated {refreshing ? "…" : updated}
+          </button>
         </div>
+        <button onClick={() => showToast("📍 Hyderabad")} className="flex items-center gap-1.5 px-3 py-2 rounded-full text-[12px] font-medium wl-card">
+          <MapPin className="w-3.5 h-3.5" /> Hyderabad
+        </button>
       </div>
-    </div>
-  );
-}
 
-/* --------------------------- TAB BAR ----------------------------- */
+      {/* Search */}
+      <div className="relative mb-5">
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "var(--color-muted-foreground)" }} />
+        <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search places, categories…" className="w-full h-14 pl-11 pr-12 rounded-2xl text-[14px] outline-none" style={{ background: "var(--color-card)", border: "1px solid var(--color-border)" }} />
+        {q && <button onClick={() => setQ("")} className="absolute right-4 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center" style={{ background: "var(--color-muted)" }}><X className="w-3.5 h-3.5" /></button>}
+      </div>
 
-function TabBar({ tab, setTab, alertCount }: { tab: Tab; setTab: (t: Tab) => void; alertCount: number }) {
-  const items: { key: Tab; label: string; Icon: React.ComponentType<{ className?: string; strokeWidth?: number }>; badge?: number }[] = [
-    { key: "home", label: "Home", Icon: IconHome },
-    { key: "map", label: "Map", Icon: IconMap },
-    { key: "alerts", label: "Alerts", Icon: Bell, badge: alertCount },
-    { key: "saved", label: "Saved", Icon: Bookmark },
-  ];
-  return (
-    <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] bg-card border-t border-border z-50">
-      <div className="grid grid-cols-4 px-2 pt-2 pb-3">
-        {items.map(({ key, label, Icon, badge }) => {
-          const active = tab === key;
+      {/* Categories */}
+      <div className="flex gap-2 overflow-x-auto no-scrollbar -mx-5 px-5 mb-5">
+        {CATS.map(c => {
+          const active = cat === c.key;
           return (
-            <button
-              key={key}
-              onClick={() => setTab(key)}
-              className="flex flex-col items-center gap-1 py-1.5 min-h-[44px] relative"
-              aria-label={label}
-            >
-              <div className="relative">
-                <Icon className={`w-6 h-6 ${active ? "text-accent" : "text-muted-foreground"}`} strokeWidth={active ? 2.4 : 2} />
-                {badge ? (
-                  <span className="absolute -top-1 -right-2 min-w-[16px] h-4 px-1 rounded-full bg-q-busy text-white text-[10px] font-bold flex items-center justify-center">
-                    {badge}
-                  </span>
-                ) : null}
-              </div>
-              <span className={`text-[11px] font-semibold ${active ? "text-accent" : "text-muted-foreground"}`}>{label}</span>
+            <button key={c.key} onClick={() => setCat(c.key)} className="shrink-0 px-4 h-10 rounded-full text-[13px] font-medium flex items-center gap-1.5 transition-all" style={{ background: active ? "var(--color-primary)" : "var(--color-card)", color: active ? "var(--color-primary-foreground)" : "var(--color-foreground)", border: active ? "none" : "1px solid var(--color-border)" }}>
+              <span>{c.emoji}</span> {c.label}
             </button>
           );
         })}
       </div>
-    </nav>
-  );
-}
 
-/* ------------------------- SHARED ATOMS -------------------------- */
-
-function CrowdBar({ pct }: { pct: number }) {
-  const l = crowdLevel(pct);
-  const c = levelClasses(l);
-  return (
-    <div className="w-full h-1.5 rounded-full bg-muted overflow-hidden">
-      <div className={`h-full ${c.fill} rounded-full transition-all`} style={{ width: `${Math.max(4, pct)}%` }} />
-    </div>
-  );
-}
-
-function WaitBadge({ wait, trend, size = "md" }: { wait: number; trend?: Trend; size?: "md" | "lg" }) {
-  const l = waitLevel(wait);
-  const c = levelClasses(l);
-  const T = trend === "up" ? TrendingUp : trend === "down" ? TrendingDown : Minus;
-  return (
-    <div className={`inline-flex items-center gap-1 rounded-full font-semibold ${c.bg} ${c.text} ${size === "lg" ? "px-3 py-1.5 text-[14px]" : "px-2.5 py-1 text-[12px]"}`}>
-      {wait === 0 ? "No wait" : `${wait} min`}
-      {trend && <T className="w-3 h-3" strokeWidth={2.5} />}
-    </div>
-  );
-}
-
-function CategoryIcon({ cat }: { cat: Category }) {
-  return (
-    <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center text-2xl shrink-0">
-      {CATEGORY_EMOJI[cat]}
-    </div>
-  );
-}
-
-function LiveDot({ color = "#ef4444" }: { color?: string }) {
-  return (
-    <span className="relative inline-block w-2 h-2 rounded-full" style={{ color }}>
-      <span className="absolute inset-0 rounded-full" style={{ background: color }} />
-      <span className="lq-pulse-dot absolute inset-0 rounded-full" style={{ color }} />
-    </span>
-  );
-}
-
-/* --------------------------- HOME -------------------------------- */
-
-function HomeScreen({
-  onOpen, onSave, saved, lastRefresh, refreshing, onRefresh,
-}: {
-  onOpen: (id: string) => void;
-  onSave: (id: string) => void;
-  saved: Set<string>;
-  lastRefresh: number;
-  refreshing: boolean;
-  onRefresh: () => void;
-}) {
-  const [query, setQuery] = useState("");
-  const [cat, setCat] = useState<Category | "All">("All");
-  const [sort, setSort] = useState<"near" | "short" | "long">("near");
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => { const t = setTimeout(() => setLoading(false), 600); return () => clearTimeout(t); }, []);
-
-  const minsAgo = Math.max(0, Math.floor((Date.now() - lastRefresh) / 60000));
-
-  const list = useMemo(() => {
-    let l = PLACES.slice();
-    if (cat !== "All") l = l.filter((p) => p.category === cat);
-    if (query.trim()) {
-      const q = query.toLowerCase();
-      l = l.filter((p) => p.name.toLowerCase().includes(q) || p.category.toLowerCase().includes(q));
-    }
-    if (sort === "near") l.sort((a, b) => a.distanceNum - b.distanceNum);
-    if (sort === "short") l.sort((a, b) => a.wait - b.wait);
-    if (sort === "long") l.sort((a, b) => b.wait - a.wait);
-    return l;
-  }, [query, cat, sort]);
-
-  // pull to refresh (simple)
-  const startY = useRef<number | null>(null);
-  const [pull, setPull] = useState(0);
-  function onTouchStart(e: React.TouchEvent) {
-    if (window.scrollY === 0) startY.current = e.touches[0].clientY;
-  }
-  function onTouchMove(e: React.TouchEvent) {
-    if (startY.current != null) {
-      const d = e.touches[0].clientY - startY.current;
-      if (d > 0) setPull(Math.min(80, d));
-    }
-  }
-  function onTouchEnd() {
-    if (pull > 60) onRefresh();
-    setPull(0); startY.current = null;
-  }
-
-  return (
-    <div className="lq-fade-in" onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
-      {pull > 0 && (
-        <div className="flex justify-center pt-2" style={{ height: pull }}>
-          <RefreshCw className={`w-5 h-5 text-accent ${pull > 60 ? "lq-spin" : ""}`} />
+      {/* AI Recommendation */}
+      <div className="wl-card p-5 mb-5 wl-fade-up" style={{ background: "var(--color-primary)", color: "var(--color-primary-foreground)" }}>
+        <div className="flex items-center gap-1.5 text-[10px] font-semibold tracking-[0.18em] uppercase opacity-70 mb-2">
+          <Sparkles className="w-3 h-3" /> AI Recommendation
         </div>
-      )}
-
-      {/* Header */}
-      <header className="px-5 pt-5 pb-3">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h1 className="text-[22px] font-bold tracking-tight">LiveQ</h1>
-            <button onClick={onRefresh} className="mt-0.5 flex items-center gap-1.5 text-[12px] text-muted-foreground">
-              <RefreshCw className={`w-3 h-3 ${refreshing ? "lq-spin" : ""}`} />
-              <span>Updated {minsAgo === 0 ? "just now" : `${minsAgo} min ago`} · tap to refresh</span>
-            </button>
-          </div>
-          <button className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-card lq-shadow text-[12px] font-medium min-h-[36px]">
-            <MapPin className="w-3.5 h-3.5 text-accent" />
-            Hyderabad
-          </button>
-        </div>
-      </header>
-
-      {/* Search */}
-      <div className="px-5 pb-3">
-        <div className="relative">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search hospitals, banks, gyms…"
-            className="w-full h-12 pl-10 pr-10 rounded-2xl bg-card border border-border text-[14px] focus:outline-none focus:border-accent placeholder:text-muted-foreground"
-          />
-          {query && (
-            <button onClick={() => setQuery("")} className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-muted flex items-center justify-center">
-              <X className="w-4 h-4 text-muted-foreground" />
-            </button>
-          )}
-        </div>
+        <div className="serif-italic text-[22px] leading-tight mb-1">Go now to <span className="underline decoration-[var(--color-accent)] underline-offset-4">{aiPick.name}</span></div>
+        <div className="text-[13px] opacity-80">Only {aiPick.wait} min wait · {crowdLabel(aiPick.crowd).toLowerCase()} right now · {aiPick.distance} away</div>
+        <button onClick={() => openDetail(aiPick.id)} className="mt-4 inline-flex items-center gap-1 text-[13px] font-semibold" style={{ color: "var(--color-accent)" }}>
+          See why <ChevronRight className="w-4 h-4" />
+        </button>
       </div>
 
-      {/* Categories */}
-      <div className="pb-3">
-        <div className="flex gap-2 px-5 overflow-x-auto no-scrollbar">
-          {CATEGORIES.map((c) => {
-            const active = cat === c.key;
+      {/* Live overview */}
+      <SectionTitle>Live overview</SectionTitle>
+      <div className="grid grid-cols-3 gap-2 mb-6">
+        <StatTile label="Quiet" value={places.filter(p => p.wait < 15).length} color="var(--q-free)" />
+        <StatTile label="Moderate" value={places.filter(p => p.wait >= 15 && p.wait < 30).length} color="var(--q-medium)" />
+        <StatTile label="Busy" value={places.filter(p => p.wait >= 30).length} color="var(--q-busy)" />
+      </div>
+
+      {/* Nearby */}
+      <div className="flex items-end justify-between mb-3">
+        <SectionTitle>Nearby places</SectionTitle>
+        <span className="text-[11px]" style={{ color: "var(--color-muted-foreground)" }}>{filtered.length} found</span>
+      </div>
+      <div className="flex flex-col gap-3">
+        {filtered.map((p, i) => (
+          <div key={p.id} className="wl-fade-up" style={{ animationDelay: `${i*40}ms` }}>
+            <PlaceCard place={p} saved={saved.has(p.id)} onTap={() => openDetail(p.id)} onSave={() => toggleSave(p.id)} />
+          </div>
+        ))}
+        {filtered.length === 0 && (
+          <div className="wl-card p-8 text-center">
+            <div className="text-[36px] mb-2">🔍</div>
+            <div className="text-[14px] font-semibold mb-1">No results</div>
+            <div className="text-[12px]" style={{ color: "var(--color-muted-foreground)" }}>Try a different search or category.</div>
+          </div>
+        )}
+      </div>
+
+      {/* Trending */}
+      <SectionTitle className="mt-8">Trending nearby</SectionTitle>
+      <div className="flex gap-3 overflow-x-auto no-scrollbar -mx-5 px-5 pb-2">
+        {trending.map(p => (
+          <button key={p.id} onClick={() => openDetail(p.id)} className="shrink-0 w-[160px] wl-card p-4 text-left">
+            <div className="text-[28px] mb-2">{p.emoji}</div>
+            <div className="text-[13px] font-semibold leading-tight line-clamp-1">{p.name}</div>
+            <div className="text-[11px] mt-0.5" style={{ color: "var(--color-muted-foreground)" }}>{p.reports} reports</div>
+            <WaitPill wait={p.wait} trend={p.trend} className="mt-3" />
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SectionTitle({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  return <h2 className={`text-[11px] font-semibold tracking-[0.18em] uppercase mb-3 ${className}`} style={{ color: "var(--color-muted-foreground)" }}>{children}</h2>;
+}
+
+function StatTile({ label, value, color }: { label: string; value: number; color: string }) {
+  return (
+    <div className="wl-card p-3.5">
+      <div className="flex items-center gap-1.5 mb-2"><span className="w-1.5 h-1.5 rounded-full wl-dot-pulse" style={{ background: color }} /><span className="text-[10px] font-medium uppercase tracking-wider" style={{ color: "var(--color-muted-foreground)" }}>{label}</span></div>
+      <div className="text-[22px] font-bold leading-none">{value}</div>
+    </div>
+  );
+}
+
+/* ========================= PLACE CARD ========================= */
+function PlaceCard({ place: p, saved, onTap, onSave }: { place: Place; saved: boolean; onTap: () => void; onSave: () => void }) {
+  const c = waitColor(p.wait);
+  return (
+    <div className="wl-card p-4 active:scale-[0.99] transition-transform">
+      <button onClick={onTap} className="w-full text-left">
+        <div className="flex items-start gap-3">
+          <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-[22px] shrink-0" style={{ background: "var(--color-muted)" }}>{p.emoji}</div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <div className="text-[15px] font-semibold leading-tight truncate">{p.name}</div>
+                <div className="text-[12px] mt-0.5" style={{ color: "var(--color-muted-foreground)" }}>{p.category} · {p.distance}</div>
+              </div>
+              <button onClick={(e) => { e.stopPropagation(); onSave(); }} className="shrink-0 -m-2 p-2">
+                <Heart className="w-5 h-5 transition-all" style={{ fill: saved ? "var(--color-danger)" : "transparent", color: saved ? "var(--color-danger)" : "var(--color-muted-foreground)" }} />
+              </button>
+            </div>
+            <div className="flex items-center gap-2 mt-2.5">
+              <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[12px] font-semibold" style={{ background: c.bg, color: c.text }}>
+                {p.wait === 0 ? "No wait 🎉" : <>{p.wait} min {trendIcon(p.trend)}</>}
+              </div>
+              <span className="text-[11px]" style={{ color: "var(--color-muted-foreground)" }}>{crowdLabel(p.crowd)}</span>
+            </div>
+          </div>
+        </div>
+        <div className="mt-3.5">
+          <div className="h-2 rounded-full overflow-hidden" style={{ background: "var(--color-muted)" }}>
+            <div className="h-full wl-bar-grow rounded-full" style={{ width: `${p.crowd}%`, background: c.solid }} />
+          </div>
+          <div className="text-[11px] mt-1.5" style={{ color: "var(--color-muted-foreground)" }}>{p.crowd}% full · {p.crowd > 70 ? "Peak hours now" : p.crowd > 40 ? "Steady flow" : "Plenty of room"}</div>
+        </div>
+      </button>
+    </div>
+  );
+}
+
+function WaitPill({ wait, trend, className = "" }: { wait: number; trend: Trend; className?: string }) {
+  const c = waitColor(wait);
+  return (
+    <div className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold ${className}`} style={{ background: c.bg, color: c.text }}>
+      {wait === 0 ? "No wait" : <>{wait} min {trendIcon(trend)}</>}
+    </div>
+  );
+}
+
+/* ============================ EXPLORE ============================ */
+function ExploreScreen({ places, openDetail }: { places: Place[]; openDetail: (id: string) => void }) {
+  const [selected, setSelected] = useState<string | null>(null);
+  const [filter, setFilter] = useState<Category | "All">("All");
+  const list = filter === "All" ? places : places.filter(p => p.category === filter);
+  const sel = selected ? places.find(p => p.id === selected) : null;
+
+  return (
+    <div className="relative h-[calc(100vh-88px)]">
+      {/* Stylised map */}
+      <div className="absolute inset-0" style={{
+        background: `
+          radial-gradient(circle at 20% 30%, rgba(59,130,246,0.08), transparent 40%),
+          radial-gradient(circle at 80% 60%, rgba(34,197,94,0.08), transparent 40%),
+          linear-gradient(180deg, #EFEBE0 0%, #E6E0D2 100%)
+        `,
+      }}>
+        <svg className="absolute inset-0 w-full h-full opacity-30">
+          <defs>
+            <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#B8B0A0" strokeWidth="0.5" />
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#grid)" />
+          <path d="M 0 200 Q 200 180 430 220" stroke="#B8B0A0" strokeWidth="2" fill="none" opacity="0.6" />
+          <path d="M 100 0 Q 140 300 200 700" stroke="#B8B0A0" strokeWidth="2" fill="none" opacity="0.6" />
+          <path d="M 0 450 Q 200 420 430 470" stroke="#B8B0A0" strokeWidth="2" fill="none" opacity="0.6" />
+        </svg>
+      </div>
+
+      {/* Top header + filters */}
+      <div className="absolute top-0 inset-x-0 z-10 px-5 pt-12 pb-3" style={{ background: "linear-gradient(180deg, rgba(247,245,239,0.95) 0%, rgba(247,245,239,0) 100%)" }}>
+        <div className="text-[22px] font-bold mb-3">Explore</div>
+        <div className="flex gap-2 overflow-x-auto no-scrollbar -mx-5 px-5">
+          {CATS.slice(0, 7).map(c => {
+            const active = filter === c.key;
             return (
-              <button
-                key={c.key}
-                onClick={() => setCat(active ? "All" : c.key)}
-                className={`shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[13px] font-medium min-h-[36px] transition-colors ${active ? "bg-accent text-accent-foreground" : "bg-card border border-border text-foreground"}`}
-              >
-                <span className="text-base leading-none">{c.emoji}</span> {c.label}
+              <button key={c.key} onClick={() => setFilter(c.key)} className="shrink-0 px-3.5 h-9 rounded-full text-[12px] font-medium flex items-center gap-1.5" style={{ background: active ? "var(--color-primary)" : "rgba(255,255,255,0.9)", color: active ? "var(--color-primary-foreground)" : "var(--color-foreground)", border: active ? "none" : "1px solid var(--color-border)", backdropFilter: "blur(8px)" }}>
+                <span>{c.emoji}</span> {c.label}
               </button>
             );
           })}
         </div>
       </div>
 
-      {/* Sort */}
-      <div className="px-5 pb-2 flex items-center gap-3 text-[12px]">
-        <span className="text-muted-foreground">Sort by:</span>
-        {([
-          ["near", "Nearest"],
-          ["short", "Shortest wait"],
-          ["long", "Longest wait"],
-        ] as const).map(([k, label]) => (
-          <button
-            key={k}
-            onClick={() => setSort(k)}
-            className={`font-medium ${sort === k ? "text-accent underline underline-offset-4" : "text-muted-foreground"}`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-
-      {/* List */}
-      <div className="px-5 pt-3 space-y-3">
-        {loading ? (
-          Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="lq-card p-4">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl lq-shimmer" />
-                <div className="flex-1 space-y-2">
-                  <div className="h-3.5 w-2/3 rounded lq-shimmer" />
-                  <div className="h-3 w-1/3 rounded lq-shimmer" />
-                </div>
-              </div>
-              <div className="h-1.5 mt-4 rounded-full lq-shimmer" />
-            </div>
-          ))
-        ) : list.length === 0 ? (
-          <div className="lq-card p-8 text-center">
-            <div className="text-5xl mb-3">🔍</div>
-            <div className="font-semibold text-[15px]">No places found nearby</div>
-            <div className="text-[13px] text-muted-foreground mt-1">Try a different category or search.</div>
-            <button onClick={() => { setQuery(""); setCat("All"); }} className="mt-4 inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-lg bg-accent text-accent-foreground text-[13px] font-semibold min-h-[40px]">
-              <MapPin className="w-4 h-4" /> Change location
-            </button>
-          </div>
-        ) : (
-          list.map((p) => (
-            <PlaceCard
-              key={p.id}
-              place={p}
-              onOpen={() => onOpen(p.id)}
-              saved={saved.has(p.id)}
-              onSave={() => onSave(p.id)}
-            />
-          ))
-        )}
-      </div>
-    </div>
-  );
-}
-
-function PlaceCard({ place, onOpen, saved, onSave }: { place: Place; onOpen: () => void; saved: boolean; onSave: () => void; }) {
-  const cl = crowdLevel(place.crowd);
-  const c = levelClasses(cl);
-  const isPeak = place.crowd >= 70;
-  // swipe-right to save
-  const sx = useRef<number | null>(null);
-  const lp = useRef<number | null>(null);
-  function ts(e: React.TouchEvent) { sx.current = e.touches[0].clientX; lp.current = window.setTimeout(() => { if (!saved) onSave(); }, 550); }
-  function te(e: React.TouchEvent) {
-    if (lp.current) { clearTimeout(lp.current); lp.current = null; }
-    if (sx.current != null) {
-      const dx = e.changedTouches[0].clientX - sx.current;
-      if (dx > 70 && !saved) onSave();
-    }
-    sx.current = null;
-  }
-  return (
-    <button
-      onClick={onOpen}
-      onTouchStart={ts}
-      onTouchEnd={te}
-      className="lq-card w-full p-4 text-left active:scale-[0.99] transition-transform"
-    >
-      <div className="flex items-center gap-3">
-        <CategoryIcon cat={place.category} />
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5">
-            <div className="font-semibold text-[15px] truncate">{place.name}</div>
-            {saved && <Heart className="w-3.5 h-3.5 text-q-busy fill-q-busy shrink-0" />}
-          </div>
-          <div className="text-[12px] text-muted-foreground truncate">{place.category} · {place.distance}</div>
-        </div>
-        <WaitBadge wait={place.wait} trend={place.trend} />
-      </div>
-      <div className="mt-3">
-        <CrowdBar pct={place.crowd} />
-        <div className={`mt-1.5 text-[11px] ${c.text} font-medium`}>
-          {place.crowd}% full{isPeak ? " · Peak hours now" : ""}
-        </div>
-      </div>
-    </button>
-  );
-}
-
-/* ----------------------- PLACE DETAIL ---------------------------- */
-
-function PlaceDetail({
-  place, onBack, saved, onSave, onSetAlert, onReport,
-}: {
-  place: Place;
-  onBack: () => void;
-  saved: boolean;
-  onSave: () => void;
-  onSetAlert: (threshold: number, alsoBusy: boolean, daily: boolean) => void;
-  onReport: () => void;
-}) {
-  const status = statusLabel(place.crowd);
-  const statusLevel = place.crowd >= 70 ? "busy" : place.crowd >= 40 ? "medium" : "free";
-  const sCls = levelClasses(statusLevel);
-  const wCls = levelClasses(waitLevel(place.wait));
-  const [showAlert, setShowAlert] = useState(false);
-  const [actual, setActual] = useState(0);
-  const [reported, setReported] = useState(false);
-
-  // peak chart hours
-  const hours = [8,9,10,11,12,13,14,15,16,17,18,19,20];
-  const heights = [25, 40, 70, 90, 75, 50, 35, 45, 65, 85, 95, 70, 40];
-  const nowHour = 14;
-
-  return (
-    <div className="absolute inset-0 z-40 bg-background overflow-y-auto pb-28 lq-slide-in-right">
-      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur px-3 py-3 flex items-center justify-between border-b border-border">
-        <button onClick={onBack} className="w-11 h-11 rounded-full flex items-center justify-center bg-card lq-shadow" aria-label="Back">
-          <ChevronLeft className="w-5 h-5" />
-        </button>
-        <button onClick={onSave} className="w-11 h-11 rounded-full flex items-center justify-center bg-card lq-shadow" aria-label="Save">
-          <Heart className={`w-5 h-5 ${saved ? "text-q-busy fill-q-busy" : "text-muted-foreground"}`} />
-        </button>
-      </div>
-
-      <div className="px-5 pt-4">
-        {/* Hero */}
-        <div className="flex items-start gap-3">
-          <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center text-3xl">{CATEGORY_EMOJI[place.category]}</div>
-          <div className="flex-1">
-            <h1 className="text-[22px] font-bold leading-tight">{place.name}</h1>
-            <div className="flex items-center flex-wrap gap-2 mt-1.5">
-              <span className="px-2 py-0.5 rounded-full bg-muted text-[11px] font-medium">{place.category}</span>
-              <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full ${sCls.bg} ${sCls.text} text-[11px] font-semibold`}>
-                {status === "Very Busy" && <LiveDot color={sCls.solid} />}
-                {status}
-              </span>
-            </div>
-            <div className="text-[12px] text-muted-foreground mt-1">{place.distance} · {place.hours}</div>
-          </div>
-        </div>
-
-        {/* Wait block */}
-        <div className="lq-card mt-5 p-6 text-center">
-          <div className={`text-[64px] leading-none font-extrabold ${wCls.text}`} style={{ fontFamily: "Outfit" }}>
-            {place.wait === 0 ? "0" : place.wait}
-          </div>
-          <div className="text-[13px] text-muted-foreground mt-1">min estimated wait</div>
-          <div className="mt-3 inline-flex items-center gap-1.5 text-[13px] font-medium">
-            {place.trend === "up" ? <><TrendingUp className="w-4 h-4 text-q-busy" /><span className="text-q-busy-text">Getting busier</span></> :
-              place.trend === "down" ? <><TrendingDown className="w-4 h-4 text-q-free" /><span className="text-q-free-text">Clearing up</span></> :
-              <><Minus className="w-4 h-4 text-muted-foreground" /><span className="text-muted-foreground">Holding steady</span></>}
-          </div>
-          <div className="mt-3 inline-block px-2.5 py-1 rounded-full bg-muted text-[11px] text-muted-foreground">
-            Based on {place.reports} reports · {place.reportedAgo} min ago
-          </div>
-        </div>
-
-        {/* Crowd level */}
-        <div className="lq-card mt-3 p-4">
-          <div className="flex items-center justify-between">
-            <div className="text-[13px] font-semibold">Crowd level</div>
-            <div className={`text-[14px] font-bold ${sCls.text}`}>{place.crowd}%</div>
-          </div>
-          <div className="mt-2 h-2.5 rounded-full bg-muted overflow-hidden">
-            <div className={`h-full ${sCls.fill} rounded-full`} style={{ width: `${place.crowd}%` }} />
-          </div>
-          <div className={`mt-2 text-[12px] ${sCls.text}`}>
-            {place.crowd >= 70 ? "Nearly full — consider coming back later" :
-             place.crowd >= 40 ? "Moderate crowd — manageable wait" :
-             "Quiet right now — great time to visit"}
-          </div>
-        </div>
-
-        {/* Peak hours */}
-        <div className="lq-card mt-3 p-4">
-          <div className="text-[13px] font-semibold mb-3">Busy times today</div>
-          <div className="flex items-end justify-between gap-1 h-24">
-            {heights.map((h, i) => {
-              const lvl = h >= 75 ? "busy" : h >= 45 ? "medium" : "free";
-              const cl = levelClasses(lvl);
-              const isNow = hours[i] === nowHour;
-              return (
-                <div key={i} className="flex-1 flex flex-col items-center justify-end h-full">
-                  <div
-                    className={`w-full rounded-t ${cl.fill} ${isNow ? "ring-2 ring-accent ring-offset-1 ring-offset-card" : ""}`}
-                    style={{ height: `${h}%` }}
-                  />
-                </div>
-              );
-            })}
-          </div>
-          <div className="flex justify-between mt-2 text-[10px] text-muted-foreground">
-            <span>8a</span><span>10a</span><span>12p</span><span>2p</span><span>4p</span><span>6p</span><span>8p</span>
-          </div>
-        </div>
-
-        {/* Actions */}
-        <div className="grid grid-cols-2 gap-3 mt-4">
-          <button onClick={() => setShowAlert(true)} className="h-12 rounded-lg bg-accent text-accent-foreground font-semibold text-[14px] flex items-center justify-center gap-2 min-h-[44px]">
-            <Bell className="w-4 h-4" /> Alert me
-          </button>
-          <button className="h-12 rounded-lg bg-card border border-border font-semibold text-[14px] flex items-center justify-center gap-2 min-h-[44px]">
-            <Navigation className="w-4 h-4 text-accent" /> Directions
-          </button>
-        </div>
-
-        {/* Report */}
-        <div className="lq-card mt-4 p-4">
-          <div className="text-[14px] font-semibold">Help others — report your wait</div>
-          <div className="text-[12px] text-muted-foreground mt-0.5">One tap confirms you're here right now.</div>
-          <button
-            onClick={() => { setReported(true); onReport(); }}
-            className={`mt-3 w-full h-12 rounded-lg font-semibold text-[14px] flex items-center justify-center gap-2 min-h-[44px] ${reported ? "bg-q-free-bg text-q-free-text" : "bg-foreground text-background"}`}
-          >
-            {reported ? <><Check className="w-4 h-4" /> Reported — thanks!</> : <>📍 I'm here now</>}
-          </button>
-
-          <div className="mt-3 flex items-center gap-2">
-            <div className="text-[12px] text-muted-foreground flex-1">Actual wait:</div>
-            <button onClick={() => setActual(Math.max(0, actual - 1))} className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center"><IconMinus className="w-4 h-4" /></button>
-            <div className="w-14 text-center font-semibold">{actual} min</div>
-            <button onClick={() => setActual(actual + 1)} className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center"><Plus className="w-4 h-4" /></button>
-            <button onClick={() => { onReport(); setActual(0); }} className="ml-1 px-3 h-9 rounded-lg bg-accent text-accent-foreground text-[12px] font-semibold">Confirm</button>
-          </div>
-          <div className="text-[11px] text-muted-foreground mt-3">14 people confirmed this in the last hour</div>
-        </div>
-
-        {/* Info */}
-        <div className="lq-card mt-4 p-4 space-y-3">
-          <div className="text-[14px] font-semibold">Info</div>
-          <InfoRow label="Hours" value={place.hours} />
-          <InfoRow label="Phone" value={place.phone} icon={<Phone className="w-4 h-4 text-accent" />} action={`tel:${place.phone.replace(/\s/g, "")}`} />
-          <InfoRow label="Address" value={place.address} icon={<MapPin className="w-4 h-4 text-accent" />} onClick={() => navigator.clipboard?.writeText(place.address)} />
-        </div>
-      </div>
-
-      {showAlert && (
-        <AlertSheet
-          place={place}
-          onClose={() => setShowAlert(false)}
-          onConfirm={(t, ab, d) => { onSetAlert(t, ab, d); setShowAlert(false); }}
-        />
-      )}
-    </div>
-  );
-}
-
-function InfoRow({ label, value, icon, action, onClick }: { label: string; value: string; icon?: React.ReactNode; action?: string; onClick?: () => void }) {
-  const content = (
-    <div className="flex items-center justify-between gap-3 min-h-[44px]">
-      <div>
-        <div className="text-[11px] text-muted-foreground">{label}</div>
-        <div className="text-[13px] font-medium">{value}</div>
-      </div>
-      {icon}
-    </div>
-  );
-  if (action) return <a href={action} className="block">{content}</a>;
-  if (onClick) return <button onClick={onClick} className="w-full text-left">{content}</button>;
-  return content;
-}
-
-/* ------------------------ ALERT SHEET ---------------------------- */
-
-function AlertSheet({ place, onClose, onConfirm }: { place: Place; onClose: () => void; onConfirm: (t: number, ab: boolean, daily: boolean) => void }) {
-  const [threshold, setThreshold] = useState(15);
-  const [alsoBusy, setAlsoBusy] = useState(true);
-  const [daily, setDaily] = useState(false);
-  // swipe down to dismiss
-  const sy = useRef<number | null>(null);
-  const [dy, setDy] = useState(0);
-  return (
-    <div className="fixed inset-0 z-[80] flex items-end">
-      <div className="absolute inset-0 bg-black/40 lq-fade-in" onClick={onClose} />
-      <div
-        className="relative w-full max-w-[430px] mx-auto bg-card rounded-t-3xl p-5 pb-8 lq-slide-up lq-shadow-lg"
-        style={{ transform: `translateY(${dy}px)` }}
-        onTouchStart={(e) => { sy.current = e.touches[0].clientY; }}
-        onTouchMove={(e) => { if (sy.current != null) { const d = e.touches[0].clientY - sy.current; if (d > 0) setDy(d); } }}
-        onTouchEnd={() => { if (dy > 80) onClose(); else setDy(0); sy.current = null; }}
-      >
-        <div className="mx-auto w-12 h-1.5 rounded-full bg-muted mb-4" />
-        <h2 className="text-[18px] font-bold">Set wait alert for {place.name}</h2>
-        <p className="text-[12px] text-muted-foreground mt-1">We'll ping you the moment things change.</p>
-
-        <div className="mt-5">
-          <div className="flex items-center justify-between">
-            <span className="text-[13px] font-medium">Notify me when wait drops below</span>
-            <span className="text-[15px] font-bold text-accent">{threshold} min</span>
-          </div>
-          <input
-            type="range" min={1} max={60} step={1} value={threshold}
-            onChange={(e) => setThreshold(Number(e.target.value))}
-            className="w-full mt-3 accent-[#0ea5e9]"
-          />
-          <div className="flex justify-between text-[10px] text-muted-foreground mt-1"><span>1 min</span><span>60 min</span></div>
-        </div>
-
-        <ToggleRow label="Also alert if it gets very busy (>70%)" value={alsoBusy} onChange={setAlsoBusy} />
-        <ToggleRow label="Repeat daily at best time" value={daily} onChange={setDaily} />
-
-        <button
-          onClick={() => onConfirm(threshold, alsoBusy, daily)}
-          className="mt-5 w-full h-12 rounded-lg bg-accent text-accent-foreground font-semibold text-[14px] min-h-[44px]"
-        >
-          Set Alert
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function ToggleRow({ label, value, onChange }: { label: string; value: boolean; onChange: (v: boolean) => void }) {
-  return (
-    <button onClick={() => onChange(!value)} className="mt-4 w-full flex items-center justify-between min-h-[44px]">
-      <span className="text-[13px] text-left pr-3">{label}</span>
-      <span className={`relative w-11 h-6 rounded-full transition-colors ${value ? "bg-accent" : "bg-muted"}`}>
-        <span className={`absolute top-0.5 ${value ? "left-5" : "left-0.5"} w-5 h-5 rounded-full bg-white lq-shadow transition-all`} />
-      </span>
-    </button>
-  );
-}
-
-/* ----------------------------- MAP ------------------------------- */
-
-function MapScreen({ onOpen }: { onOpen: (id: string) => void }) {
-  const [cat, setCat] = useState<Category | "All">("All");
-  const [activeId, setActiveId] = useState<string | null>(null);
-  const list = cat === "All" ? PLACES : PLACES.filter((p) => p.category === cat);
-  const active = activeId ? PLACES.find((p) => p.id === activeId) ?? null : null;
-
-  // pseudo-positions (deterministic)
-  const positions = useMemo(() => {
-    return list.map((p, i) => ({
-      id: p.id,
-      top: 18 + ((i * 53) % 62),
-      left: 12 + ((i * 37) % 72),
-    }));
-  }, [list]);
-
-  return (
-    <div className="lq-fade-in relative h-screen">
-      {/* Map background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[#e2eef7] to-[#cfe1ef] dark:from-[#0b1626] dark:to-[#0e1f33]">
-        <div
-          className="absolute inset-0 opacity-40"
-          style={{
-            backgroundImage:
-              "linear-gradient(rgba(15,23,42,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(15,23,42,0.08) 1px, transparent 1px)",
-            backgroundSize: "44px 44px",
-          }}
-        />
-        {/* fake roads */}
-        <div className="absolute top-1/3 left-0 right-0 h-3 bg-card/70 -rotate-3" />
-        <div className="absolute top-2/3 left-0 right-0 h-2 bg-card/60 rotate-6" />
-        <div className="absolute top-0 bottom-0 left-1/2 w-2 bg-card/60 rotate-12" />
-      </div>
-
-      {/* Category chips overlay */}
-      <div className="absolute top-0 left-0 right-0 z-20 pt-4 pb-2">
-        <div className="px-4">
-          <div className="bg-card/90 backdrop-blur rounded-2xl p-2 lq-shadow">
-            <div className="flex gap-2 overflow-x-auto no-scrollbar">
-              {CATEGORIES.map((c) => {
-                const active = cat === c.key;
-                return (
-                  <button
-                    key={c.key}
-                    onClick={() => setCat(active ? "All" : c.key)}
-                    className={`shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-medium ${active ? "bg-accent text-accent-foreground" : "bg-muted text-foreground"}`}
-                  >
-                    <span>{c.emoji}</span>{c.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Pins */}
-      {positions.map(({ id, top, left }) => {
-        const p = list.find((x) => x.id === id)!;
-        const lvl = waitLevel(p.wait);
-        const c = levelClasses(lvl);
+      {list.map((p, i) => {
+        const c = waitColor(p.wait);
+        const top = 130 + (i * 73) % 380;
+        const left = 30 + (i * 97) % 320;
+        const isBusy = p.wait >= 30;
         return (
-          <button
-            key={id}
-            onClick={() => setActiveId(id)}
-            className="absolute z-10"
-            style={{ top: `${top}%`, left: `${left}%`, transform: "translate(-50%, -50%)" }}
-          >
-            <div className={`relative w-11 h-11 rounded-full ${c.fill} text-white font-bold flex items-center justify-center lq-shadow-lg border-2 border-white text-[12px]`}>
-              {p.wait}
-              <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[6px] border-r-[6px] border-t-[8px] border-l-transparent border-r-transparent" style={{ borderTopColor: c.solid }} />
+          <button key={p.id} onClick={() => setSelected(p.id)} className="absolute z-[5]" style={{ top, left }}>
+            <div className="relative">
+              {isBusy && <div className="absolute inset-0 wl-pulse-ring rounded-full" style={{ color: c.solid }} />}
+              <div className="relative w-11 h-11 rounded-full flex items-center justify-center text-[12px] font-bold text-white wl-shadow-lg" style={{ background: c.solid }}>{p.wait}</div>
             </div>
           </button>
         );
       })}
 
-      {/* My location */}
-      <button className="absolute bottom-32 right-5 z-20 w-12 h-12 rounded-full bg-card lq-shadow-lg flex items-center justify-center" aria-label="My location">
-        <Navigation className="w-5 h-5 text-accent" />
+      {/* My location FAB */}
+      <button className="absolute bottom-5 right-5 z-10 w-12 h-12 rounded-full flex items-center justify-center wl-shadow-lg" style={{ background: "var(--color-card)" }}>
+        <Navigation className="w-5 h-5" style={{ color: "var(--color-accent)" }} />
       </button>
-      <div className="absolute top-[55%] left-[45%] z-10">
-        <div className="relative">
-          <div className="w-4 h-4 rounded-full bg-accent border-2 border-white lq-shadow" />
-          <div className="absolute inset-0 rounded-full bg-accent/40 animate-ping" />
-        </div>
-      </div>
 
       {/* Mini card */}
-      {active && (
-        <div className="absolute bottom-24 left-4 right-4 z-30 lq-card p-4 lq-slide-up">
+      {sel && (
+        <div className="absolute bottom-5 left-5 right-20 z-10 wl-slide-up wl-card p-4">
           <div className="flex items-center gap-3">
-            <CategoryIcon cat={active.category} />
+            <div className="w-11 h-11 rounded-2xl flex items-center justify-center text-[20px]" style={{ background: "var(--color-muted)" }}>{sel.emoji}</div>
             <div className="flex-1 min-w-0">
-              <div className="font-semibold text-[15px] truncate">{active.name}</div>
-              <div className="text-[12px] text-muted-foreground">{active.category} · {active.distance}</div>
+              <div className="text-[14px] font-semibold leading-tight truncate">{sel.name}</div>
+              <div className="text-[11px]" style={{ color: "var(--color-muted-foreground)" }}>{sel.category} · {sel.distance}</div>
             </div>
-            <WaitBadge wait={active.wait} trend={active.trend} />
+            <WaitPill wait={sel.wait} trend={sel.trend} />
           </div>
-          <div className="mt-3"><CrowdBar pct={active.crowd} /></div>
-          <div className="mt-3 flex gap-2">
-            <button onClick={() => setActiveId(null)} className="flex-1 h-10 rounded-lg bg-muted text-[13px] font-semibold">Close</button>
-            <button onClick={() => onOpen(active.id)} className="flex-1 h-10 rounded-lg bg-accent text-accent-foreground text-[13px] font-semibold">View details</button>
-          </div>
+          <button onClick={() => openDetail(sel.id)} className="mt-3 w-full h-10 rounded-xl text-[13px] font-semibold flex items-center justify-center gap-1" style={{ background: "var(--color-primary)", color: "var(--color-primary-foreground)" }}>
+            View details <ChevronRight className="w-4 h-4" />
+          </button>
         </div>
       )}
     </div>
   );
 }
 
-/* ---------------------------- ALERTS ----------------------------- */
-
-function AlertsScreen({
-  alerts, setAlerts, triggered, dismissTriggered, onOpen,
-}: {
-  alerts: Alert[];
-  setAlerts: React.Dispatch<React.SetStateAction<Alert[]>>;
-  triggered: { id: string; placeId: string; wait: number; at: string } | null;
-  dismissTriggered: () => void;
-  onOpen: (id: string) => void;
+/* ============================ ALERTS ============================ */
+function AlertsScreen({ alerts, places, setAlerts, openDetail, switchTab, showToast }: {
+  alerts: { id: string; placeId: string; threshold: number; on: boolean }[];
+  places: Place[]; setAlerts: (a: any) => void; openDetail: (id: string) => void;
+  switchTab: (t: Tab) => void; showToast: (m: string) => void;
 }) {
-  return (
-    <div className="lq-fade-in pt-5 px-5">
-      <h1 className="text-[22px] font-bold">My Alerts</h1>
-      <p className="text-[12px] text-muted-foreground mt-0.5">We'll notify you when conditions match.</p>
+  const triggered = alerts.filter(a => {
+    const p = places.find(x => x.id === a.placeId);
+    return a.on && p && p.wait <= a.threshold;
+  });
 
-      {triggered && (() => {
-        const p = PLACES.find((x) => x.id === triggered.placeId)!;
+  return (
+    <div className="px-5 pt-12">
+      <div className="text-[26px] font-bold leading-tight">My Alerts</div>
+      <p className="serif-italic text-[16px] mt-1 mb-6" style={{ color: "var(--color-muted-foreground)" }}>We'll notify you when conditions match.</p>
+
+      {triggered.map(a => {
+        const p = places.find(x => x.id === a.placeId)!;
         return (
-          <div className="mt-4 rounded-2xl bg-q-free-bg p-4 flex items-start gap-3 lq-fade-in">
-            <div className="w-9 h-9 rounded-full bg-q-free text-white flex items-center justify-center font-bold">✓</div>
-            <div className="flex-1">
-              <div className="font-semibold text-[14px] text-q-free-text">{p.name} — wait dropped to {triggered.wait} min</div>
-              <div className="text-[11px] text-q-free-text/80 mt-0.5">{triggered.at}</div>
-              <button onClick={() => onOpen(p.id)} className="text-[12px] font-semibold text-q-free-text underline mt-2">View place →</button>
+          <div key={a.id} className="wl-card p-4 mb-3 wl-fade-up" style={{ background: "var(--q-free-bg)", border: "1px solid color-mix(in oklab, var(--q-free) 30%, transparent)" }}>
+            <div className="flex items-start gap-3">
+              <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "var(--q-free)" }}>
+                <Check className="w-5 h-5 text-white" />
+              </div>
+              <div className="flex-1">
+                <div className="text-[14px] font-semibold" style={{ color: "var(--q-free-text)" }}>{p.name} — wait dropped to {p.wait} min</div>
+                <div className="text-[12px] mt-0.5" style={{ color: "var(--q-free-text)", opacity: 0.8 }}>Just now</div>
+                <button onClick={() => openDetail(p.id)} className="mt-2 text-[12px] font-semibold inline-flex items-center gap-1" style={{ color: "var(--q-free-text)" }}>View details <ChevronRight className="w-3.5 h-3.5" /></button>
+              </div>
             </div>
-            <button onClick={dismissTriggered} className="w-8 h-8 rounded-full bg-white/60 flex items-center justify-center"><X className="w-4 h-4 text-q-free-text" /></button>
           </div>
         );
-      })()}
+      })}
 
-      <div className="mt-5 space-y-3">
-        {alerts.length === 0 ? (
-          <div className="lq-card p-8 text-center">
-            <div className="text-5xl mb-3">🔔</div>
-            <div className="font-semibold">No alerts set yet</div>
-            <div className="text-[12px] text-muted-foreground mt-1">Open a place and tap "Alert me" to get notified.</div>
+      {alerts.length === 0 ? (
+        <div className="wl-card p-10 text-center mt-4">
+          <div className="w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-4" style={{ background: "var(--color-muted)" }}>
+            <Bell className="w-7 h-7" style={{ color: "var(--color-muted-foreground)" }} />
           </div>
-        ) : alerts.map((a) => {
-          const p = PLACES.find((x) => x.id === a.placeId);
-          if (!p) return null;
-          const progress = Math.min(100, Math.max(0, ((a.threshold * 2 - p.wait) / (a.threshold * 2)) * 100));
-          return <AlertRow key={a.id} place={p} alert={a} progress={progress} onOpen={() => onOpen(p.id)}
-            onToggle={() => setAlerts((all) => all.map((x) => x.id === a.id ? { ...x, enabled: !x.enabled } : x))}
-            onDelete={() => setAlerts((all) => all.filter((x) => x.id !== a.id))}
-          />;
+          <div className="text-[16px] font-semibold">No alerts yet</div>
+          <p className="text-[13px] mt-1" style={{ color: "var(--color-muted-foreground)" }}>Open any place and tap <span className="font-semibold">Alert me</span> to get started.</p>
+          <button onClick={() => switchTab("home")} className="mt-5 inline-flex items-center gap-1 px-5 h-11 rounded-full text-[13px] font-semibold" style={{ background: "var(--color-primary)", color: "var(--color-primary-foreground)" }}>
+            Explore places <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-3">
+          {alerts.map(a => {
+            const p = places.find(x => x.id === a.placeId);
+            if (!p) return null;
+            const pct = Math.min(100, (a.threshold / Math.max(p.wait, a.threshold)) * 100);
+            const ready = p.wait <= a.threshold;
+            return (
+              <div key={a.id} className="wl-card p-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-11 h-11 rounded-2xl flex items-center justify-center text-[20px]" style={{ background: "var(--color-muted)" }}>{p.emoji}</div>
+                  <button onClick={() => openDetail(p.id)} className="flex-1 text-left min-w-0">
+                    <div className="text-[14px] font-semibold leading-tight truncate">{p.name}</div>
+                    <div className="text-[12px] mt-0.5" style={{ color: "var(--color-muted-foreground)" }}>Notify when wait &lt; {a.threshold} min</div>
+                  </button>
+                  <Toggle on={a.on} onChange={v => setAlerts((all: any) => all.map((x: any) => x.id === a.id ? { ...x, on: v } : x))} />
+                </div>
+                <div className="mt-3">
+                  <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "var(--color-muted)" }}>
+                    <div className="h-full rounded-full wl-bar-grow" style={{ width: `${pct}%`, background: ready ? "var(--q-free)" : p.wait > a.threshold * 2 ? "var(--q-busy)" : "var(--q-medium)" }} />
+                  </div>
+                  <div className="flex items-center justify-between mt-1.5">
+                    <span className="text-[11px]" style={{ color: "var(--color-muted-foreground)" }}>Now {p.wait} min · target {a.threshold} min</span>
+                    <button onClick={() => { setAlerts((all: any) => all.filter((x: any) => x.id !== a.id)); showToast("Alert removed"); }} className="text-[11px] font-medium inline-flex items-center gap-1" style={{ color: "var(--color-danger)" }}>
+                      <Trash2 className="w-3 h-3" /> Remove
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Toggle({ on, onChange }: { on: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <button onClick={() => onChange(!on)} className="w-11 h-6 rounded-full relative transition-colors shrink-0" style={{ background: on ? "var(--color-accent)" : "var(--color-border)" }}>
+      <div className="absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all" style={{ left: on ? 22 : 2 }} />
+    </button>
+  );
+}
+
+/* ============================ SAVED ============================ */
+function SavedScreen({ places, saved, toggleSave, openDetail, switchTab }: {
+  places: Place[]; saved: Set<string>; toggleSave: (id: string) => void;
+  openDetail: (id: string) => void; switchTab: (t: Tab) => void;
+}) {
+  const list = places.filter(p => saved.has(p.id));
+  return (
+    <div className="px-5 pt-12">
+      <div className="text-[26px] font-bold leading-tight">Saved</div>
+      <p className="serif-italic text-[16px] mt-1 mb-6" style={{ color: "var(--color-muted-foreground)" }}>Quick access to your favourites.</p>
+
+      {list.length === 0 ? (
+        <div className="wl-card p-10 text-center">
+          <div className="w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-4" style={{ background: "var(--color-muted)" }}>
+            <Heart className="w-7 h-7" style={{ color: "var(--color-muted-foreground)" }} />
+          </div>
+          <div className="text-[16px] font-semibold">Nothing saved yet</div>
+          <p className="text-[13px] mt-1" style={{ color: "var(--color-muted-foreground)" }}>Tap the heart on any place to save it.</p>
+          <button onClick={() => switchTab("home")} className="mt-5 inline-flex items-center gap-1 px-5 h-11 rounded-full text-[13px] font-semibold" style={{ background: "var(--color-primary)", color: "var(--color-primary-foreground)" }}>
+            Browse places <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 gap-3">
+          {list.map((p, i) => {
+            const c = waitColor(p.wait);
+            return (
+              <button key={p.id} onClick={() => openDetail(p.id)} className="wl-card p-4 text-left wl-fade-up" style={{ animationDelay: `${i*40}ms` }}>
+                <div className="flex items-start justify-between mb-2">
+                  <div className="text-[24px]">{p.emoji}</div>
+                  <button onClick={(e) => { e.stopPropagation(); toggleSave(p.id); }}>
+                    <Heart className="w-4 h-4" style={{ fill: "var(--color-danger)", color: "var(--color-danger)" }} />
+                  </button>
+                </div>
+                <div className="text-[13px] font-semibold leading-tight line-clamp-1">{p.name}</div>
+                <div className="text-[10px] mt-0.5" style={{ color: "var(--color-muted-foreground)" }}>{p.category}</div>
+                <WaitPill wait={p.wait} trend={p.trend} className="mt-2.5" />
+                <div className="mt-2 h-1.5 rounded-full overflow-hidden" style={{ background: "var(--color-muted)" }}>
+                  <div className="h-full wl-bar-grow rounded-full" style={{ width: `${p.crowd}%`, background: c.solid }} />
+                </div>
+                <div className="text-[10px] mt-1.5" style={{ color: "var(--color-muted-foreground)" }}>
+                  {p.crowd < 40 ? "Quiet — great time" : p.crowd < 70 ? "Moderate" : "Busy — wait it out"}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ============================ PROFILE ============================ */
+function ProfileScreen({ savedCount, alertCount }: { savedCount: number; alertCount: number }) {
+  return (
+    <div className="px-5 pt-12">
+      <div className="text-[26px] font-bold leading-tight">Profile</div>
+      <p className="serif-italic text-[16px] mt-1 mb-6" style={{ color: "var(--color-muted-foreground)" }}>Your time, reclaimed.</p>
+
+      <div className="wl-card p-5 mb-5 flex items-center gap-4">
+        <div className="w-14 h-14 rounded-full flex items-center justify-center text-[20px] font-bold" style={{ background: "var(--color-primary)", color: "var(--color-primary-foreground)" }}>RA</div>
+        <div className="flex-1">
+          <div className="text-[16px] font-semibold">Ravi A.</div>
+          <div className="text-[12px]" style={{ color: "var(--color-muted-foreground)" }}>Time Saver · Rank #248</div>
+        </div>
+        <ChevronRight className="w-5 h-5" style={{ color: "var(--color-muted-foreground)" }} />
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 mb-6">
+        <BigStat label="Hours saved" value="14h 22m" accent="var(--color-accent)" />
+        <BigStat label="Places visited" value="37" />
+        <BigStat label="Alerts active" value={String(alertCount)} accent="var(--color-warning)" />
+        <BigStat label="Saved" value={String(savedCount)} accent="var(--color-danger)" />
+      </div>
+
+      <SectionTitle>Badges</SectionTitle>
+      <div className="flex gap-3 overflow-x-auto no-scrollbar -mx-5 px-5 mb-6">
+        {[
+          { e: "⚡", t: "Early Bird" }, { e: "🧠", t: "Smart Planner" },
+          { e: "🤝", t: "Helper" }, { e: "🏆", t: "Streak ×7" },
+        ].map(b => (
+          <div key={b.t} className="shrink-0 w-[100px] wl-card p-4 text-center">
+            <div className="text-[28px]">{b.e}</div>
+            <div className="text-[11px] font-semibold mt-1">{b.t}</div>
+          </div>
+        ))}
+      </div>
+
+      <SectionTitle>Settings</SectionTitle>
+      <div className="wl-card overflow-hidden">
+        {["Notifications", "Privacy", "Theme", "Account", "Help & support"].map((l, i, arr) => (
+          <button key={l} className="w-full px-5 py-4 flex items-center justify-between text-[14px] font-medium" style={{ borderBottom: i < arr.length - 1 ? "1px solid var(--color-border)" : "none" }}>
+            {l} <ChevronRight className="w-4 h-4" style={{ color: "var(--color-muted-foreground)" }} />
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+function BigStat({ label, value, accent }: { label: string; value: string; accent?: string }) {
+  return (
+    <div className="wl-card p-4">
+      <div className="text-[11px] uppercase tracking-wider font-medium" style={{ color: "var(--color-muted-foreground)" }}>{label}</div>
+      <div className="text-[22px] font-bold mt-1.5" style={{ color: accent || "var(--color-foreground)" }}>{value}</div>
+    </div>
+  );
+}
+
+/* ============================ DETAIL ============================ */
+function Detail({ place: p, saved, onClose, onToggleSave, onAlert, showToast }: {
+  place: Place; saved: boolean; onClose: () => void; onToggleSave: () => void;
+  onAlert: () => void; showToast: (m: string) => void;
+}) {
+  const c = waitColor(p.wait);
+  const [reportCount, setReportCount] = useState(p.reports);
+  const [reportedRecently, setReportedRecently] = useState(false);
+  const [actualWait, setActualWait] = useState("");
+
+  function imHere() {
+    if (reportedRecently) { showToast("Already reported recently"); return; }
+    setReportCount(n => n + 1); setReportedRecently(true);
+    showToast("+1 person confirmed");
+  }
+  function confirmWait() {
+    if (!actualWait) return;
+    showToast("Thanks! Your report helps everyone");
+    setActualWait("");
+  }
+
+  return (
+    <div className="fixed inset-0 z-[100] flex justify-center" style={{ background: "rgba(0,0,0,0.4)" }}>
+      <div className="relative w-full max-w-[430px] h-full overflow-y-auto wl-slide-in-right" style={{ background: "var(--color-background)" }}>
+        {/* Top bar */}
+        <div className="sticky top-0 z-10 flex items-center justify-between px-4 pt-12 pb-3" style={{ background: "var(--color-background)" }}>
+          <button onClick={onClose} className="w-10 h-10 rounded-full flex items-center justify-center wl-card"><ChevronLeft className="w-5 h-5" /></button>
+          <div className="flex gap-2">
+            <button className="w-10 h-10 rounded-full flex items-center justify-center wl-card"><Share2 className="w-4 h-4" /></button>
+            <button onClick={onToggleSave} className="w-10 h-10 rounded-full flex items-center justify-center wl-card">
+              <Heart className="w-4 h-4" style={{ fill: saved ? "var(--color-danger)" : "transparent", color: saved ? "var(--color-danger)" : "var(--color-foreground)" }} />
+            </button>
+          </div>
+        </div>
+
+        <div className="px-5 pb-32">
+          {/* Hero */}
+          <div className="flex items-start gap-4 mb-5">
+            <div className="w-16 h-16 rounded-3xl flex items-center justify-center text-[32px]" style={{ background: "var(--color-muted)" }}>{p.emoji}</div>
+            <div className="flex-1 pt-1">
+              <h1 className="text-[24px] font-bold leading-tight">{p.name}</h1>
+              <div className="flex items-center gap-2 mt-1 text-[12px]" style={{ color: "var(--color-muted-foreground)" }}>
+                <span className="inline-flex items-center gap-0.5"><Star className="w-3 h-3" style={{ fill: "var(--color-warning)", color: "var(--color-warning)" }} />{p.rating}</span>
+                <span>·</span><span>{p.category}</span><span>·</span><span>{p.distance}</span>
+              </div>
+              <div className="flex items-center gap-1.5 mt-2 text-[12px] font-medium">
+                <span className="w-2 h-2 rounded-full wl-dot-pulse" style={{ background: p.open ? "var(--q-free)" : "var(--q-busy)" }} />
+                {p.open ? `Open · closes ${p.closes}` : "Closed"}
+              </div>
+            </div>
+          </div>
+
+          {/* Status banner */}
+          <div className="rounded-2xl px-4 py-3 mb-5 flex items-center gap-2 text-[13px] font-semibold" style={{ background: c.bg, color: c.text }}>
+            <Activity className="w-4 h-4" />
+            {crowdLabel(p.crowd)} — {p.crowd > 70 ? "expect a wait" : p.crowd > 40 ? "moderate flow" : "great time to visit"}
+          </div>
+
+          {/* Wait time hero */}
+          <div className="wl-card p-6 mb-4 text-center">
+            <div className="text-[11px] uppercase tracking-[0.18em] font-semibold mb-2" style={{ color: "var(--color-muted-foreground)" }}>Estimated wait</div>
+            <div className="text-[64px] leading-none font-extrabold" style={{ color: c.solid }}>{p.wait}<span className="text-[20px] font-semibold ml-1" style={{ color: "var(--color-muted-foreground)" }}>min</span></div>
+            <div className="mt-3 inline-flex items-center gap-1.5 text-[12px] font-medium" style={{ color: p.trend === "up" ? "var(--color-danger)" : p.trend === "down" ? "var(--color-success)" : "var(--color-muted-foreground)" }}>
+              {trendIcon(p.trend)} {p.trend === "up" ? "Getting busier" : p.trend === "down" ? "Clearing up" : "Holding steady"}
+            </div>
+            <div className="mt-1 text-[11px]" style={{ color: "var(--color-muted-foreground)" }}>Based on {reportCount} reports · 3 min ago</div>
+          </div>
+
+          {/* Crowd card */}
+          <div className="wl-card p-5 mb-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[13px] font-semibold">Crowd level</span>
+              <span className="text-[18px] font-bold" style={{ color: c.solid }}>{p.crowd}%</span>
+            </div>
+            <div className="h-3 rounded-full overflow-hidden" style={{ background: "var(--color-muted)" }}>
+              <div className="h-full wl-bar-grow rounded-full" style={{ width: `${p.crowd}%`, background: c.solid }} />
+            </div>
+            <div className="mt-2 text-[12px]" style={{ color: "var(--color-muted-foreground)" }}>
+              {p.crowd > 70 ? "Nearly full — consider coming back later" : p.crowd > 40 ? "Steady — manageable wait" : "Quiet right now — great time to visit"}
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="grid grid-cols-2 gap-3 mb-5">
+            <button onClick={onAlert} className="h-14 rounded-2xl text-[14px] font-semibold flex items-center justify-center gap-1.5" style={{ background: "var(--color-primary)", color: "var(--color-primary-foreground)" }}>
+              <Bell className="w-4 h-4" /> Alert me
+            </button>
+            <button onClick={() => { window.open(`https://maps.google.com/?q=${encodeURIComponent(p.address)}`); }} className="h-14 rounded-2xl text-[14px] font-semibold flex items-center justify-center gap-1.5" style={{ background: "var(--color-card)", border: "1px solid var(--color-border)" }}>
+              <Navigation className="w-4 h-4" /> Directions
+            </button>
+          </div>
+
+          {/* Busy times chart */}
+          <div className="wl-card p-5 mb-4">
+            <div className="text-[13px] font-semibold mb-1">Busy times today</div>
+            <div className="text-[11px] mb-4" style={{ color: "var(--color-muted-foreground)" }}>Hourly forecast · 92% confidence</div>
+            <div className="flex items-end gap-1.5 h-32">
+              {HOURLY.map((v, i) => {
+                const col = v < 40 ? "var(--q-free)" : v < 70 ? "var(--q-medium)" : "var(--q-busy)";
+                const cur = i === CURRENT_HOUR_IDX;
+                return (
+                  <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                    <div className="w-full rounded-t-md wl-bar-grow origin-bottom" style={{ height: `${v}%`, background: col, transformOrigin: "bottom", outline: cur ? "2px solid var(--color-accent)" : "none", outlineOffset: 2 }} />
+                    <div className="text-[9px]" style={{ color: cur ? "var(--color-accent)" : "var(--color-muted-foreground)", fontWeight: cur ? 700 : 400 }}>{HOURS[i]}</div>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="mt-4 px-3 py-2.5 rounded-xl text-[12px] flex items-start gap-2" style={{ background: "var(--color-muted)" }}>
+              <Sparkles className="w-3.5 h-3.5 mt-0.5 shrink-0" style={{ color: "var(--color-accent)" }} />
+              <span><span className="font-semibold">Best time to visit:</span> 4:00 PM — predicted wait ~8 min.</span>
+            </div>
+          </div>
+
+          {/* Report */}
+          <div className="wl-card p-5 mb-4">
+            <div className="text-[13px] font-semibold mb-1">Help others</div>
+            <div className="text-[11px] mb-4" style={{ color: "var(--color-muted-foreground)" }}>Report your wait — community data keeps everyone moving.</div>
+            <button onClick={imHere} disabled={reportedRecently} className="w-full h-12 rounded-xl text-[14px] font-semibold mb-3 disabled:opacity-50" style={{ background: "var(--color-primary)", color: "var(--color-primary-foreground)" }}>
+              {reportedRecently ? "✓ Reported — thanks!" : "I'm here now"}
+            </button>
+            <div className="flex gap-2">
+              <input type="number" value={actualWait} onChange={e => setActualWait(e.target.value)} placeholder="Actual wait (min)" className="flex-1 h-11 px-3.5 rounded-xl text-[13px] outline-none" style={{ background: "var(--color-muted)" }} />
+              <button onClick={confirmWait} className="h-11 px-4 rounded-xl text-[13px] font-semibold" style={{ background: "var(--color-card)", border: "1px solid var(--color-border)" }}>Confirm</button>
+            </div>
+            <div className="text-[11px] mt-3" style={{ color: "var(--color-muted-foreground)" }}>{reportCount} people confirmed in the last hour</div>
+          </div>
+
+          {/* Info */}
+          <div className="wl-card overflow-hidden">
+            <InfoRow icon={<Clock className="w-4 h-4" />} label={p.open ? `Open · closes ${p.closes}` : "Closed"} />
+            <InfoRow icon={<Phone className="w-4 h-4" />} label={p.phone} onClick={() => window.open(`tel:${p.phone}`)} />
+            <InfoRow icon={<MapPin className="w-4 h-4" />} label={p.address} onClick={() => { navigator.clipboard?.writeText(p.address); showToast("Address copied"); }} last />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+function InfoRow({ icon, label, onClick, last }: { icon: React.ReactNode; label: string; onClick?: () => void; last?: boolean }) {
+  return (
+    <button onClick={onClick} className="w-full px-5 py-4 flex items-center gap-3 text-left" style={{ borderBottom: last ? "none" : "1px solid var(--color-border)" }}>
+      <div style={{ color: "var(--color-muted-foreground)" }}>{icon}</div>
+      <span className="text-[13px] font-medium flex-1">{label}</span>
+    </button>
+  );
+}
+
+/* ========================== ALERT MODAL ========================== */
+function AlertModal({ place, onClose, onSet }: { place: Place; onClose: () => void; onSet: (th: number) => void }) {
+  const [th, setTh] = useState(15);
+  const [busy, setBusy] = useState(false);
+  const [daily, setDaily] = useState(false);
+
+  return (
+    <div className="fixed inset-0 z-[110] flex justify-center items-end" style={{ background: "rgba(0,0,0,0.5)" }} onClick={onClose}>
+      <div className="relative w-full max-w-[430px] rounded-t-[28px] wl-slide-up p-6 pb-10" style={{ background: "var(--color-card)" }} onClick={e => e.stopPropagation()}>
+        <div className="mx-auto w-10 h-1.5 rounded-full mb-5" style={{ background: "var(--color-border)" }} />
+        <div className="text-[18px] font-bold leading-tight">Set wait alert</div>
+        <div className="text-[13px] mt-1" style={{ color: "var(--color-muted-foreground)" }}>For <span className="font-semibold" style={{ color: "var(--color-foreground)" }}>{place.name}</span></div>
+
+        <div className="mt-7">
+          <div className="text-[11px] uppercase tracking-wider font-semibold" style={{ color: "var(--color-muted-foreground)" }}>Notify when wait drops below</div>
+          <div className="text-[48px] font-extrabold leading-none mt-2" style={{ color: "var(--color-accent)" }}>{th}<span className="text-[16px] font-semibold ml-1" style={{ color: "var(--color-muted-foreground)" }}>min</span></div>
+          <input type="range" min={1} max={60} value={th} onChange={e => setTh(+e.target.value)} className="w-full mt-4 accent-[var(--color-accent)]" />
+          <div className="flex justify-between text-[10px] mt-1" style={{ color: "var(--color-muted-foreground)" }}><span>1</span><span>60</span></div>
+        </div>
+
+        <div className="mt-6 flex flex-col gap-3">
+          <ToggleRow on={busy} onChange={setBusy} title="Also alert if very busy (>70%)" />
+          <ToggleRow on={daily} onChange={setDaily} title="Repeat daily at best time" sub="Based on typical quiet hours" />
+        </div>
+
+        <button onClick={() => onSet(th)} className="mt-7 w-full h-14 rounded-2xl text-[15px] font-semibold" style={{ background: "var(--color-primary)", color: "var(--color-primary-foreground)" }}>Set alert</button>
+      </div>
+    </div>
+  );
+}
+function ToggleRow({ on, onChange, title, sub }: { on: boolean; onChange: (v: boolean) => void; title: string; sub?: string }) {
+  return (
+    <div className="flex items-center gap-3 p-4 rounded-2xl" style={{ background: "var(--color-muted)" }}>
+      <div className="flex-1">
+        <div className="text-[13px] font-semibold">{title}</div>
+        {sub && <div className="text-[11px] mt-0.5" style={{ color: "var(--color-muted-foreground)" }}>{sub}</div>}
+      </div>
+      <Toggle on={on} onChange={onChange} />
+    </div>
+  );
+}
+
+/* ========================== BOTTOM NAV ========================== */
+function BottomNav({ tab, setTab, alertCount, savedCount }: { tab: Tab; setTab: (t: Tab) => void; alertCount: number; savedCount: number }) {
+  const items: { key: Tab; label: string; icon: any; badge?: number }[] = [
+    { key: "home", label: "Home", icon: IconHome },
+    { key: "explore", label: "Explore", icon: IconMap },
+    { key: "alerts", label: "Alerts", icon: Bell, badge: alertCount },
+    { key: "saved", label: "Saved", icon: Bookmark, badge: savedCount },
+    { key: "profile", label: "Profile", icon: IconUser },
+  ];
+  return (
+    <div className="fixed bottom-0 inset-x-0 z-50 flex justify-center" style={{ background: "transparent" }}>
+      <div className="w-full max-w-[430px] flex items-stretch px-2 pt-2 pb-3" style={{ background: "var(--color-card)", borderTop: "1px solid var(--color-border)" }}>
+        {items.map(it => {
+          const Icon = it.icon;
+          const active = tab === it.key;
+          return (
+            <button key={it.key} onClick={() => setTab(it.key)} className="flex-1 flex flex-col items-center gap-1 py-1.5 relative">
+              <div className="relative">
+                <Icon className="w-[22px] h-[22px]" style={{ color: active ? "var(--color-foreground)" : "var(--color-muted-foreground)", strokeWidth: active ? 2.4 : 1.8 }} />
+                {it.badge ? <span className="absolute -top-1 -right-2 min-w-[16px] h-4 px-1 rounded-full text-[9px] font-bold flex items-center justify-center text-white" style={{ background: "var(--color-danger)" }}>{it.badge}</span> : null}
+              </div>
+              <span className="text-[10px] font-semibold" style={{ color: active ? "var(--color-foreground)" : "var(--color-muted-foreground)" }}>{it.label}</span>
+            </button>
+          );
         })}
       </div>
     </div>
-  );
-}
-
-function AlertRow({ place, alert, progress, onOpen, onToggle, onDelete }: { place: Place; alert: Alert; progress: number; onOpen: () => void; onToggle: () => void; onDelete: () => void; }) {
-  const [dx, setDx] = useState(0);
-  const sx = useRef<number | null>(null);
-  return (
-    <div className="relative overflow-hidden rounded-2xl">
-      <div className="absolute inset-y-0 right-0 w-24 bg-q-busy flex items-center justify-center">
-        <button onClick={onDelete} className="text-white"><Trash2 className="w-5 h-5" /></button>
-      </div>
-      <div
-        className="relative lq-card p-4"
-        style={{ transform: `translateX(${dx}px)`, transition: dx === 0 ? "transform 200ms" : "none" }}
-        onTouchStart={(e) => { sx.current = e.touches[0].clientX; }}
-        onTouchMove={(e) => { if (sx.current != null) { const d = e.touches[0].clientX - sx.current; if (d < 0) setDx(Math.max(-96, d)); } }}
-        onTouchEnd={() => { if (dx < -60) setDx(-96); else setDx(0); sx.current = null; }}
-      >
-        <div className="flex items-center gap-3">
-          <CategoryIcon cat={place.category} />
-          <button onClick={onOpen} className="flex-1 text-left min-w-0">
-            <div className="font-semibold text-[15px] truncate">{place.name}</div>
-            <div className="text-[12px] text-muted-foreground">Notify when wait &lt; {alert.threshold} min</div>
-          </button>
-          <button onClick={onToggle} className={`relative w-11 h-6 rounded-full ${alert.enabled ? "bg-accent" : "bg-muted"}`}>
-            <span className={`absolute top-0.5 ${alert.enabled ? "left-5" : "left-0.5"} w-5 h-5 rounded-full bg-white lq-shadow transition-all`} />
-          </button>
-        </div>
-        <div className="mt-3">
-          <div className="flex items-center justify-between text-[11px] text-muted-foreground mb-1.5">
-            <span>Current wait {place.wait} min</span>
-            <span>Threshold {alert.threshold} min</span>
-          </div>
-          <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-            <div className="h-full bg-accent rounded-full transition-all" style={{ width: `${progress}%` }} />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ----------------------------- SAVED ----------------------------- */
-
-function SavedScreen({ saved, onOpen, onRemove, onBrowse }: { saved: Set<string>; onOpen: (id: string) => void; onRemove: (id: string) => void; onBrowse: () => void; }) {
-  const list = PLACES.filter((p) => saved.has(p.id));
-  return (
-    <div className="lq-fade-in pt-5 px-5">
-      <h1 className="text-[22px] font-bold">Saved places</h1>
-      <p className="text-[12px] text-muted-foreground mt-0.5">Quick access to your favourites.</p>
-
-      {list.length === 0 ? (
-        <div className="lq-card mt-6 p-8 text-center">
-          <div className="text-5xl mb-3">♡</div>
-          <div className="font-semibold">Nothing saved yet</div>
-          <div className="text-[12px] text-muted-foreground mt-1">Tap ♡ on any place to save it.</div>
-          <button onClick={onBrowse} className="mt-4 px-4 h-10 rounded-lg bg-accent text-accent-foreground text-[13px] font-semibold">Browse places</button>
-        </div>
-      ) : (
-        <div className="grid grid-cols-2 gap-3 mt-4">
-          {list.map((p) => (
-            <SavedCard key={p.id} place={p} onOpen={() => onOpen(p.id)} onRemove={() => onRemove(p.id)} />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function SavedCard({ place, onOpen, onRemove }: { place: Place; onOpen: () => void; onRemove: () => void }) {
-  const lp = useRef<number | null>(null);
-  return (
-    <button
-      onClick={onOpen}
-      onTouchStart={() => { lp.current = window.setTimeout(onRemove, 600); }}
-      onTouchEnd={() => { if (lp.current) { clearTimeout(lp.current); lp.current = null; } }}
-      className="lq-card p-3 text-left"
-    >
-      <div className="flex items-start justify-between">
-        <CategoryIcon cat={place.category} />
-        <WaitBadge wait={place.wait} />
-      </div>
-      <div className="mt-2 font-semibold text-[13px] truncate">{place.name}</div>
-      <div className="text-[11px] text-muted-foreground truncate">{place.category} · {place.distance}</div>
-      <div className="mt-2"><CrowdBar pct={place.crowd} /></div>
-    </button>
   );
 }

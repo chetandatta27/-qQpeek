@@ -1,18 +1,20 @@
 @import "tailwindcss" source(none);
 @source "../src";
 @import "tw-animate-css";
-@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@1,400;1,500;1,600&display=swap");
 
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
   --font-display: "Outfit", system-ui, sans-serif;
   --font-sans: "Inter", system-ui, sans-serif;
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 20px;
-  --radius-2xl: 24px;
+  --font-serif: "Cormorant Garamond", Georgia, serif;
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 20px;
+  --radius-xl: 24px;
+  --radius-2xl: 28px;
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -24,6 +26,9 @@
   --color-primary-foreground: var(--primary-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
 
   --color-q-free: var(--q-free);
   --color-q-free-bg: var(--q-free-bg);
@@ -37,50 +42,50 @@
 }
 
 :root {
-  --background: #f8fafc;
-  --foreground: #0f172a;
-  --card: #ffffff;
-  --card-foreground: #0f172a;
-  --muted: #f1f5f9;
-  --muted-foreground: #64748b;
-  --border: #e2e8f0;
-  --primary: #0f172a;
-  --primary-foreground: #ffffff;
-  --accent: #0ea5e9;
-  --accent-foreground: #ffffff;
+  --background: #F7F5EF;
+  --foreground: #111111;
+  --card: #FFFFFF;
+  --card-foreground: #111111;
+  --muted: #EFECE4;
+  --muted-foreground: #6B6B6B;
+  --border: #E6E2D7;
+  --primary: #111111;
+  --primary-foreground: #FFFFFF;
+  --accent: #3B82F6;
+  --accent-foreground: #FFFFFF;
+  --success: #22C55E;
+  --warning: #F59E0B;
+  --danger: #EF4444;
 
-  --q-free: #22c55e;
-  --q-free-bg: #EAF3DE;
-  --q-free-text: #3B6D11;
-  --q-medium: #f59e0b;
-  --q-medium-bg: #FAEEDA;
-  --q-medium-text: #854F0B;
-  --q-busy: #ef4444;
-  --q-busy-bg: #FCEBEB;
-  --q-busy-text: #A32D2D;
+  --q-free: #22C55E;
+  --q-free-bg: #E8F6E9;
+  --q-free-text: #14532D;
+  --q-medium: #F59E0B;
+  --q-medium-bg: #FDF1DA;
+  --q-medium-text: #7C4A03;
+  --q-busy: #EF4444;
+  --q-busy-bg: #FCE8E8;
+  --q-busy-text: #7F1D1D;
 
-  --radius: 16px;
+  --radius: 24px;
 }
 
 .dark {
-  --background: #0f172a;
-  --foreground: #f1f5f9;
-  --card: #1e293b;
-  --card-foreground: #f1f5f9;
-  --muted: #1e293b;
-  --muted-foreground: #94a3b8;
-  --border: #334155;
-  --primary: #f1f5f9;
-  --primary-foreground: #0f172a;
-  --accent: #0ea5e9;
-  --accent-foreground: #ffffff;
-
-  --q-free-bg: #1a2e10;
-  --q-free-text: #86efac;
-  --q-medium-bg: #2e2410;
-  --q-medium-text: #fcd34d;
-  --q-busy-bg: #2e1010;
-  --q-busy-text: #fca5a5;
+  --background: #0B0B0B;
+  --foreground: #F5F5F5;
+  --card: #161616;
+  --card-foreground: #F5F5F5;
+  --muted: #1E1E1E;
+  --muted-foreground: #9A9A9A;
+  --border: #262626;
+  --primary: #F5F5F5;
+  --primary-foreground: #0B0B0B;
+  --q-free-bg: #0E2A14;
+  --q-free-text: #86EFAC;
+  --q-medium-bg: #2A1F0A;
+  --q-medium-text: #FCD34D;
+  --q-busy-bg: #2A0E0E;
+  --q-busy-text: #FCA5A5;
 }
 
 @layer base {
@@ -91,56 +96,55 @@
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
   }
-  h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: -0.02em; }
+  h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: -0.025em; }
+  .serif-italic { font-family: var(--font-serif); font-style: italic; font-weight: 500; letter-spacing: -0.01em; }
 }
 
 @layer utilities {
-  .lq-card {
-    background: var(--color-card);
-    border-radius: 16px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-  }
-  .lq-shadow { box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
-  .lq-shadow-lg { box-shadow: 0 8px 24px -8px rgba(0,0,0,0.15); }
+  .wl-card { background: var(--color-card); border-radius: 24px; box-shadow: 0 1px 2px rgba(17,17,17,0.04), 0 4px 16px -8px rgba(17,17,17,0.06); }
+  .wl-shadow-lg { box-shadow: 0 12px 40px -12px rgba(17,17,17,0.18); }
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .no-scrollbar { scrollbar-width: none; }
 
-  @keyframes lq-pulse-dot {
-    0%,100% { transform: scale(1); opacity: .7; }
-    50% { transform: scale(1.6); opacity: 0; }
+  @keyframes wl-pulse-ring {
+    0% { transform: scale(.8); opacity: .7; }
+    100% { transform: scale(2.4); opacity: 0; }
   }
-  .lq-pulse-dot::after {
+  .wl-pulse-ring::after {
     content: ""; position: absolute; inset: 0; border-radius: 9999px;
-    background: currentColor; animation: lq-pulse-dot 1.8s ease-out infinite;
+    background: currentColor; animation: wl-pulse-ring 1.8s ease-out infinite;
   }
 
-  @keyframes lq-shimmer {
-    0% { background-position: -400px 0; }
-    100% { background-position: 400px 0; }
+  @keyframes wl-fade-up { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+  .wl-fade-up { animation: wl-fade-up 380ms cubic-bezier(0.22,1,0.36,1) both; }
+
+  @keyframes wl-slide-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .wl-slide-up { animation: wl-slide-up 320ms cubic-bezier(0.22,1,0.36,1); }
+
+  @keyframes wl-slide-in-right { from { transform: translateX(24px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+  .wl-slide-in-right { animation: wl-slide-in-right 320ms cubic-bezier(0.22,1,0.36,1); }
+
+  @keyframes wl-spin { to { transform: rotate(360deg); } }
+  .wl-spin { animation: wl-spin 1s linear infinite; }
+
+  @keyframes wl-bar-grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+  .wl-bar-grow { transform-origin: left; animation: wl-bar-grow 700ms cubic-bezier(0.22,1,0.36,1) both; }
+
+  @keyframes wl-logo-in {
+    0% { opacity: 0; transform: scale(.85); }
+    60% { opacity: 1; transform: scale(1.04); }
+    100% { opacity: 1; transform: scale(1); }
   }
-  .lq-shimmer {
-    background: linear-gradient(90deg, var(--color-muted) 0%, color-mix(in oklab, var(--color-muted) 60%, white) 50%, var(--color-muted) 100%);
-    background-size: 800px 100%;
-    animation: lq-shimmer 1.6s linear infinite;
-  }
+  .wl-logo-in { animation: wl-logo-in 900ms cubic-bezier(0.22,1,0.36,1) both; }
 
-  @keyframes lq-slide-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
-  .lq-slide-up { animation: lq-slide-up 280ms cubic-bezier(0.22,1,0.36,1); }
+  @keyframes wl-dot { 0%,100% { opacity: .3 } 50% { opacity: 1 } }
+  .wl-dot-pulse { animation: wl-dot 1.4s ease-in-out infinite; }
 
-  @keyframes lq-fade-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-  .lq-fade-in { animation: lq-fade-in 240ms ease-out; }
-
-  @keyframes lq-slide-in-right { from { transform: translateX(40px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-  .lq-slide-in-right { animation: lq-slide-in-right 260ms cubic-bezier(0.22,1,0.36,1); }
-
-  @keyframes lq-spin { to { transform: rotate(360deg); } }
-  .lq-spin { animation: lq-spin 1s linear infinite; }
-
-  @keyframes lq-toast-in {
-    0% { opacity: 0; transform: translate(-50%, 20px); }
+  @keyframes wl-toast-in {
+    0% { opacity: 0; transform: translate(-50%, 16px); }
     10% { opacity: 1; transform: translate(-50%, 0); }
     90% { opacity: 1; transform: translate(-50%, 0); }
-    100% { opacity: 0; transform: translate(-50%, 20px); }
+    100% { opacity: 0; transform: translate(-50%, 16px); }
   }
-  .lq-toast { animation: lq-toast-in 3s ease-in-out forwards; }
+  .wl-toast { animation: wl-toast-in 2.8s ease-in-out forwards; }
 }

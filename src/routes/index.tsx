@@ -4,10 +4,12 @@ import {
   House, MapTrifold, Bell, BookmarkSimple, User,
   MagnifyingGlass, X, CaretLeft, CaretRight, MapPin, ArrowsClockwise,
   TrendUp, TrendDown, Minus, Heart, Phone, NavigationArrow, Check, Trash,
-  Plus, Star, Clock, Sparkle, ShareNetwork, Activity, Lightning,
+  Plus, Star, Clock, Sparkle, ShareNetwork, Pulse, Lightning,
   ClockCountdown, Path, Trophy, ShieldCheck, Users, Brain, Target,
   Confetti, ChartLineUp, MapPinLine, Hourglass,
 } from "@phosphor-icons/react";
+
+const Activity = Pulse;
 
 export const Route = createFileRoute("/")({ component: App });
 

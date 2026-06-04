@@ -802,13 +802,45 @@ function ProfileScreen({ savedCount, alertCount }: { savedCount: number; alertCo
         </div>
       </div>
 
-      {/* Stats grid */}
-      <div className="grid grid-cols-2 gap-3 mb-6">
-        <BigStat label="This month" value="3h 48m" sub="↑ 22% vs last" accent="var(--color-accent)" />
-        <BigStat label="Efficiency" value="78" sub="Above avg" />
-        <BigStat label="Reports" value="24" sub="Trusted reporter" accent="var(--color-success)" />
-        <BigStat label="Active alerts" value={String(alertCount)} sub={`${savedCount} saved`} accent="var(--color-warning)" />
+      {/* Community Impact */}
+      <SectionTitle>Community impact</SectionTitle>
+      <div className="wl-card p-5 mb-5">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0" style={{ background: "var(--color-accent)", color: "white" }}>
+            <Users size={20} weight="duotone" />
+          </div>
+          <div className="flex-1">
+            <div className="text-[16px] font-bold leading-tight">Community Hero</div>
+            <div className="text-[11px] mt-0.5" style={{ color: "var(--color-muted-foreground)" }}>Trusted contributor · Level 3</div>
+          </div>
+        </div>
+        <div className="grid grid-cols-3 gap-2 text-center">
+          <div className="p-3 rounded-2xl" style={{ background: "var(--color-muted)" }}>
+            <div className="text-[20px] font-extrabold leading-none" style={{ color: "var(--color-accent)" }}>1,240</div>
+            <div className="text-[9px] uppercase tracking-wider mt-1.5" style={{ color: "var(--color-muted-foreground)" }}>People helped</div>
+          </div>
+          <div className="p-3 rounded-2xl" style={{ background: "var(--color-muted)" }}>
+            <div className="text-[20px] font-extrabold leading-none">87</div>
+            <div className="text-[9px] uppercase tracking-wider mt-1.5" style={{ color: "var(--color-muted-foreground)" }}>Reports</div>
+          </div>
+          <div className="p-3 rounded-2xl" style={{ background: "var(--color-muted)" }}>
+            <div className="text-[20px] font-extrabold leading-none" style={{ color: "var(--color-success)" }}>94%</div>
+            <div className="text-[9px] uppercase tracking-wider mt-1.5" style={{ color: "var(--color-muted-foreground)" }}>Accuracy</div>
+          </div>
+        </div>
       </div>
+
+      {/* Weekly Report CTA */}
+      <button onClick={() => setReportOpen(true)} className="w-full wl-card p-4 mb-6 flex items-center gap-3">
+        <div className="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0" style={{ background: "var(--color-foreground)", color: "var(--color-background)" }}>
+          <ChartLineUp size={20} weight="duotone" />
+        </div>
+        <div className="flex-1 text-left">
+          <div className="text-[14px] font-semibold leading-tight">This week's report</div>
+          <div className="text-[11px] mt-0.5" style={{ color: "var(--color-muted-foreground)" }}>4h 21m saved · share your impact</div>
+        </div>
+        <CaretRight size={18} weight="bold" style={{ color: "var(--color-muted-foreground)" }} />
+      </button>
 
       {/* Badges */}
       <div className="flex items-end justify-between mb-3">
@@ -835,6 +867,75 @@ function ProfileScreen({ savedCount, alertCount }: { savedCount: number; alertCo
           </button>
         ))}
       </div>
+
+      {reportOpen && <WeeklyReport onClose={() => setReportOpen(false)} />}
+    </div>
+  );
+}
+
+function WeeklyReport({ onClose }: { onClose: () => void }) {
+  const stats = [
+    { label: "Hours saved", value: "4h 21m", accent: "var(--color-accent)" },
+    { label: "Places visited", value: "8" },
+    { label: "Alerts triggered", value: "12" },
+    { label: "Community helped", value: "124", accent: "var(--color-success)" },
+  ];
+  return (
+    <div className="fixed inset-0 z-[110] flex justify-center" style={{ background: "rgba(0,0,0,0.4)" }}>
+      <div className="relative w-full max-w-[430px] h-full overflow-y-auto wl-slide-in-right" style={{ background: "var(--color-background)" }}>
+        <div className="sticky top-0 z-10 flex items-center justify-between px-4 pt-12 pb-3" style={{ background: "var(--color-background)" }}>
+          <button onClick={onClose} className="w-10 h-10 rounded-full flex items-center justify-center wl-card"><CaretLeft size={18} weight="bold" /></button>
+          <div className="text-[14px] font-semibold">Weekly report</div>
+          <div className="w-10" />
+        </div>
+        <div className="px-5 pb-32">
+          <div className="text-[11px] uppercase tracking-[0.18em] font-semibold" style={{ color: "var(--color-muted-foreground)" }}>This week</div>
+          <h1 className="text-[28px] font-bold leading-tight mt-1">You reclaimed <span style={{ color: "var(--color-accent)" }}>4h 21m</span></h1>
+          <p className="serif-italic text-[16px] mt-2 mb-6" style={{ color: "var(--color-muted-foreground)" }}>That's more than half a workday — back to you.</p>
+
+          <div className="grid grid-cols-2 gap-3 mb-5">
+            {stats.map(s => (
+              <div key={s.label} className="wl-card p-4">
+                <div className="text-[10px] uppercase tracking-wider font-semibold" style={{ color: "var(--color-muted-foreground)" }}>{s.label}</div>
+                <div className="text-[22px] font-extrabold leading-none mt-1.5" style={{ color: s.accent || "var(--color-foreground)" }}>{s.value}</div>
+              </div>
+            ))}
+          </div>
+
+          <div className="wl-card p-5 mb-5">
+            <div className="flex items-center justify-between mb-3">
+              <div className="text-[10px] uppercase tracking-[0.18em] font-semibold" style={{ color: "var(--color-muted-foreground)" }}>Efficiency score</div>
+              <span className="text-[11px] font-semibold inline-flex items-center gap-0.5" style={{ color: "var(--color-success)" }}><TrendUp size={11} weight="bold" /> +4</span>
+            </div>
+            <div className="flex items-baseline gap-2"><span className="text-[40px] font-extrabold leading-none">82</span><span className="text-[12px]" style={{ color: "var(--color-muted-foreground)" }}>/ 100</span></div>
+            <div className="text-[11px] mt-2" style={{ color: "var(--color-muted-foreground)" }}>Most efficient day: <span className="font-semibold" style={{ color: "var(--color-foreground)" }}>Wednesday</span></div>
+          </div>
+
+          <div className="wl-card p-5 mb-5 flex items-center gap-3" style={{ background: "var(--color-primary)", color: "var(--color-primary-foreground)" }}>
+            <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: "rgba(255,255,255,0.12)" }}>
+              <Trophy size={22} weight="duotone" />
+            </div>
+            <div className="flex-1">
+              <div className="text-[10px] uppercase tracking-[0.18em] font-semibold opacity-70">Top achievement</div>
+              <div className="text-[16px] font-bold leading-tight mt-0.5">Early Bird</div>
+              <div className="text-[11px] opacity-70">Beat the morning rush 5 days in a row</div>
+            </div>
+          </div>
+
+          {/* Share card */}
+          <div className="wl-card p-5 mb-5" style={{ background: "var(--color-accent)", color: "white" }}>
+            <div className="text-[10px] uppercase tracking-[0.18em] font-semibold opacity-80 mb-2">Share your impact</div>
+            <div className="text-[18px] font-bold leading-snug">"I saved 4h 21m this week using WaitLess."</div>
+            <div className="text-[11px] opacity-80 mt-2">Score 82 · Early Bird badge</div>
+            <button className="mt-4 w-full h-12 rounded-xl text-[13px] font-semibold flex items-center justify-center gap-1.5" style={{ background: "white", color: "var(--color-accent)" }}>
+              <ShareNetwork size={16} weight="bold" /> Share card
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
     </div>
   );
 }

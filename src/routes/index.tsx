@@ -270,60 +270,101 @@ function TodayScreen({ places, saved, toggleSave, openDetail, showToast, openPla
         </button>
       </div>
 
-      {/* Minutes Saved + Efficiency */}
-      <div className="grid grid-cols-5 gap-3 mb-5">
-        <div className="col-span-3 wl-card p-5 wl-fade-up" style={{ background: "var(--color-primary)", color: "var(--color-primary-foreground)" }}>
-          <div className="flex items-center gap-1.5 text-[10px] font-semibold tracking-[0.18em] uppercase opacity-70 mb-2">
-            <Lightning size={12} weight="fill" /> Minutes saved today
+      {/* Minutes Saved hero with Daily Goal */}
+      {(() => {
+        const goal = 60;
+        const pct = Math.min(100, Math.round((minutesSavedToday / goal) * 100));
+        const remaining = Math.max(0, goal - minutesSavedToday);
+        const r = 26, circ = 2 * Math.PI * r;
+        const off = circ - (pct / 100) * circ;
+        return (
+          <div className="wl-card p-5 mb-4 wl-fade-up" style={{ background: "var(--color-primary)", color: "var(--color-primary-foreground)" }}>
+            <div className="flex items-center justify-between">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5 text-[10px] font-semibold tracking-[0.18em] uppercase opacity-70 mb-2">
+                  <Lightning size={12} weight="fill" /> Minutes saved today
+                </div>
+                <div className="text-[48px] leading-none font-extrabold">{minutesSavedToday}<span className="text-[16px] font-semibold ml-1.5 opacity-70">min</span></div>
+                <div className="text-[11px] opacity-70 mt-2">Reclaimed today · ≈ {Math.round(minutesSavedToday/60*10)/10}h this week</div>
+              </div>
+              <div className="relative w-[72px] h-[72px] shrink-0">
+                <svg viewBox="0 0 72 72" className="-rotate-90 w-full h-full">
+                  <circle cx="36" cy="36" r={r} stroke="rgba(255,255,255,0.18)" strokeWidth="6" fill="none" />
+                  <circle cx="36" cy="36" r={r} stroke="var(--color-accent)" strokeWidth="6" fill="none" strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={off} style={{ transition: "stroke-dashoffset 800ms" }} />
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <div className="text-[14px] font-extrabold leading-none">{pct}%</div>
+                  <div className="text-[8px] opacity-70 uppercase tracking-wider mt-0.5">Goal</div>
+                </div>
+              </div>
+            </div>
+            <div className="mt-4 pt-4 border-t border-white/15 flex items-center justify-between text-[12px]">
+              <span className="opacity-80">{minutesSavedToday} / {goal} min goal</span>
+              <span className="font-semibold">{remaining === 0 ? "Goal achieved 🎉" : `${remaining} min to go`}</span>
+            </div>
           </div>
-          <div className="text-[44px] leading-none font-extrabold">{minutesSavedToday}<span className="text-[16px] font-semibold ml-1.5 opacity-70">min</span></div>
-          <div className="text-[11px] opacity-70 mt-2">≈ {Math.round(minutesSavedToday/60*10)/10}h reclaimed this week</div>
-        </div>
-        <div className="col-span-2 wl-card p-4 flex flex-col items-center justify-center text-center wl-fade-up" style={{ animationDelay: "60ms" }}>
-          <div className="text-[10px] font-semibold tracking-[0.18em] uppercase mb-2" style={{ color: "var(--color-muted-foreground)" }}>Efficiency</div>
-          <ScoreRing value={efficiency} />
-          <div className="text-[10px] mt-1" style={{ color: "var(--color-muted-foreground)" }}>Above avg</div>
+        );
+      })()}
+
+      {/* Efficiency Score */}
+      <div className="wl-card p-4 mb-4 flex items-center gap-4 wl-fade-up" style={{ animationDelay: "60ms" }}>
+        <ScoreRing value={efficiency} />
+        <div className="flex-1 min-w-0">
+          <div className="text-[10px] font-semibold tracking-[0.18em] uppercase" style={{ color: "var(--color-muted-foreground)" }}>Efficiency score</div>
+          <div className="flex items-baseline gap-1.5 mt-1">
+            <span className="text-[22px] font-extrabold leading-none">{efficiency}</span>
+            <span className="text-[11px] font-medium" style={{ color: "var(--color-muted-foreground)" }}>/ 100</span>
+            <span className="ml-auto inline-flex items-center gap-0.5 text-[11px] font-semibold" style={{ color: "var(--color-success)" }}>
+              <TrendUp size={11} weight="bold" /> +5
+            </span>
+          </div>
+          <div className="text-[11px] mt-1" style={{ color: "var(--color-muted-foreground)" }}>Top 18% of users this week</div>
         </div>
       </div>
 
-      {/* Best Decision Right Now */}
-      <button onClick={() => openDetail(bestNow.id)} className="w-full text-left wl-card p-5 mb-5 wl-fade-up" style={{ animationDelay: "120ms", border: "1px solid var(--color-border)" }}>
-        <div className="flex items-center gap-1.5 text-[10px] font-semibold tracking-[0.18em] uppercase mb-2" style={{ color: "var(--color-muted-foreground)" }}>
+      {/* Best Decision Right Now — hero card */}
+      <div className="wl-card p-5 mb-5 wl-fade-up" style={{ animationDelay: "120ms", border: "1px solid var(--color-border)" }}>
+        <div className="flex items-center gap-1.5 text-[10px] font-semibold tracking-[0.18em] uppercase mb-3" style={{ color: "var(--color-muted-foreground)" }}>
           <Sparkle size={12} weight="fill" color="var(--color-accent)" /> Best decision right now
         </div>
-        <div className="flex items-start gap-3">
+        <button onClick={() => openDetail(bestNow.id)} className="w-full text-left flex items-start gap-3">
           <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-[26px] shrink-0" style={{ background: "var(--color-muted)" }}>{bestNow.emoji}</div>
           <div className="flex-1 min-w-0">
             <div className="text-[18px] font-bold leading-tight">{bestNow.name}</div>
-            <div className="text-[12px] mt-0.5" style={{ color: "var(--color-muted-foreground)" }}>{bestNow.category} · {bestNow.distance}</div>
-            <div className="mt-2.5 flex items-center gap-2 flex-wrap">
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[12px] font-semibold" style={{ background: "var(--q-free-bg)", color: "var(--q-free-text)" }}>
-                {bestNow.wait} min wait
-              </span>
-              <span className="text-[11px]" style={{ color: "var(--color-muted-foreground)" }}>{crowdLabel(bestNow.crowd).toLowerCase()}</span>
-            </div>
+            <div className="text-[12px] mt-0.5" style={{ color: "var(--color-muted-foreground)" }}>{bestNow.category} · {bestNow.distance} · {crowdLabel(bestNow.crowd).toLowerCase()}</div>
           </div>
-        </div>
-        <div className="mt-4 p-3 rounded-xl flex items-start gap-2" style={{ background: "var(--color-muted)" }}>
-          <Brain size={16} weight="duotone" color="var(--color-accent)" className="shrink-0 mt-0.5" />
-          <div className="text-[12px] leading-relaxed">
-            <span className="font-semibold">Save ~{timeSaved} min</span> vs your nearby alternatives. Quiet now, trend is {bestNow.trend === "down" ? "improving" : bestNow.trend === "up" ? "rising soon" : "stable"}.
-            <span className="ml-1 inline-flex items-center gap-0.5 font-semibold" style={{ color: "var(--color-accent)" }}>See why <CaretRight size={11} weight="bold" /></span>
+          <div className="text-right shrink-0">
+            <div className="text-[20px] font-extrabold leading-none" style={{ color: "var(--color-accent)" }}>−{timeSaved}<span className="text-[10px] font-semibold ml-0.5">min</span></div>
+            <div className="text-[9px] uppercase tracking-wider mt-1" style={{ color: "var(--color-muted-foreground)" }}>Saved</div>
           </div>
-        </div>
-      </button>
+        </button>
 
-      {/* Quick Planner CTA */}
-      <button onClick={openPlanner} className="w-full wl-card p-4 mb-6 flex items-center gap-3 wl-fade-up" style={{ animationDelay: "180ms" }}>
-        <div className="w-11 h-11 rounded-2xl flex items-center justify-center" style={{ background: "var(--color-accent)", color: "white" }}>
-          <Path size={20} weight="bold" />
+        {/* Reasoning checklist */}
+        <div className="mt-4 p-3.5 rounded-2xl space-y-2" style={{ background: "var(--color-muted)" }}>
+          <div className="text-[10px] font-semibold tracking-[0.18em] uppercase" style={{ color: "var(--color-muted-foreground)" }}>Recommended because</div>
+          {[
+            `Lowest wait nearby — only ${bestNow.wait} min`,
+            bestNow.open ? "Open now" : "Opens soon",
+            `${timeSaved} min faster than alternatives`,
+            bestNow.trend === "down" ? "Crowd clearing in the next 30 min" : "Quiet for the next 45 minutes",
+          ].map((r, i) => (
+            <div key={i} className="flex items-start gap-2 text-[12px] leading-snug">
+              <Check size={14} weight="bold" color="var(--color-success)" className="shrink-0 mt-0.5" />
+              <span>{r}</span>
+            </div>
+          ))}
         </div>
-        <div className="flex-1 text-left">
-          <div className="text-[14px] font-semibold leading-tight">Plan multiple errands</div>
-          <div className="text-[11px] mt-0.5" style={{ color: "var(--color-muted-foreground)" }}>AI orders stops to save the most time</div>
+
+        {/* CTAs */}
+        <div className="mt-4 grid grid-cols-3 gap-2">
+          <button onClick={() => { window.open(`https://maps.google.com/?q=${encodeURIComponent(bestNow.address)}`); }} className="col-span-2 h-12 rounded-xl text-[13px] font-semibold flex items-center justify-center gap-1.5" style={{ background: "var(--color-primary)", color: "var(--color-primary-foreground)" }}>
+            <NavigationArrow size={14} weight="fill" /> Go now
+          </button>
+          <button onClick={() => openDetail(bestNow.id)} className="h-12 rounded-xl text-[12px] font-semibold flex items-center justify-center gap-1" style={{ background: "var(--color-card)", border: "1px solid var(--color-border)" }}>
+            Why? <CaretRight size={12} weight="bold" />
+          </button>
         </div>
-        <CaretRight size={18} weight="bold" style={{ color: "var(--color-muted-foreground)" }} />
-      </button>
+      </div>
 
       {/* Top 3 Opportunities */}
       <SectionTitle>Top opportunities right now</SectionTitle>

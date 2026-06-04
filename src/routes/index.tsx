@@ -939,9 +939,6 @@ function WeeklyReport({ onClose }: { onClose: () => void }) {
     </div>
   );
 }
-    </div>
-  );
-}
 function BigStat({ label, value, sub, accent }: { label: string; value: string; sub?: string; accent?: string }) {
   return (
     <div className="wl-card p-4">

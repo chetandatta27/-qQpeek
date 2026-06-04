@@ -126,6 +126,11 @@ function App() {
               {tab === "saved" && <SavedScreen places={places} saved={saved} toggleSave={toggleSave} openDetail={setDetail} switchTab={setTab} />}
               {tab === "profile" && <ProfileScreen savedCount={saved.size} alertCount={alerts.length} />}
             </div>
+            {tab === "today" && (
+              <button onClick={() => setPlannerOpen(true)} className="fixed bottom-[100px] left-1/2 -translate-x-1/2 z-40 px-5 h-12 rounded-full text-[13px] font-semibold inline-flex items-center gap-2 wl-shadow-lg wl-fade-up" style={{ background: "var(--color-accent)", color: "white" }}>
+                <Path size={16} weight="bold" /> Plan my day
+              </button>
+            )}
             <BottomNav tab={tab} setTab={setTab} alertCount={alerts.filter(a => a.on).length} savedCount={saved.size} />
           </>
         )}

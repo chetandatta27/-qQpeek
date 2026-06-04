@@ -939,6 +939,42 @@ function Detail({ place: p, places, saved, onClose, onToggleSave, onAlert, openD
             </div>
           </div>
 
+          {/* Forecast card */}
+          <div className="wl-card p-5 mb-4">
+            <div className="text-[13px] font-semibold mb-1">Forecast</div>
+            <div className="text-[11px] mb-4" style={{ color: "var(--color-muted-foreground)" }}>Expected wait over the next 3 hours</div>
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { label: "In 1 hour", w: Math.max(0, Math.round(p.wait * 0.65)) },
+                { label: "In 2 hours", w: Math.max(0, Math.round(p.wait * 0.42)) },
+                { label: "In 3 hours", w: Math.max(0, Math.round(p.wait * 0.22)) },
+              ].map(f => {
+                const fc = waitColor(f.w);
+                return (
+                  <div key={f.label} className="rounded-2xl p-3 text-center" style={{ background: "var(--color-muted)" }}>
+                    <div className="text-[10px] uppercase tracking-wider font-semibold" style={{ color: "var(--color-muted-foreground)" }}>{f.label}</div>
+                    <div className="text-[22px] font-extrabold leading-none mt-1.5" style={{ color: fc.solid }}>{f.w}<span className="text-[10px] font-semibold ml-0.5" style={{ color: "var(--color-muted-foreground)" }}>min</span></div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Best time card */}
+          <div className="wl-card p-5 mb-4 flex items-center gap-4">
+            <div className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0" style={{ background: "var(--q-free-bg)" }}>
+              <Clock size={24} weight="duotone" color="var(--q-free-text)" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-[10px] uppercase tracking-[0.18em] font-semibold" style={{ color: "var(--color-muted-foreground)" }}>Best time today</div>
+              <div className="text-[24px] font-extrabold leading-tight mt-0.5">{p.bestTime}</div>
+              <div className="text-[11px] mt-1" style={{ color: "var(--color-muted-foreground)" }}>Expected wait ~{p.bestWait} min · {p.confidence}% confidence</div>
+            </div>
+            <button onClick={onAlert} className="shrink-0 w-10 h-10 rounded-full flex items-center justify-center" style={{ background: "var(--color-primary)", color: "var(--color-primary-foreground)" }}>
+              <Bell size={16} weight="fill" />
+            </button>
+          </div>
+
           {/* Actions */}
           <div className="grid grid-cols-2 gap-3 mb-5">
             <button onClick={onAlert} className="h-14 rounded-2xl text-[14px] font-semibold flex items-center justify-center gap-1.5" style={{ background: "var(--color-primary)", color: "var(--color-primary-foreground)" }}>

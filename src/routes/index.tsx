@@ -126,6 +126,11 @@ function App() {
               {tab === "saved" && <SavedScreen places={places} saved={saved} toggleSave={toggleSave} openDetail={setDetail} switchTab={setTab} />}
               {tab === "profile" && <ProfileScreen savedCount={saved.size} alertCount={alerts.length} />}
             </div>
+            {tab === "today" && (
+              <button onClick={() => setPlannerOpen(true)} className="fixed bottom-[100px] left-1/2 -translate-x-1/2 z-40 px-5 h-12 rounded-full text-[13px] font-semibold inline-flex items-center gap-2 wl-shadow-lg wl-fade-up" style={{ background: "var(--color-accent)", color: "white" }}>
+                <Path size={16} weight="bold" /> Plan my day
+              </button>
+            )}
             <BottomNav tab={tab} setTab={setTab} alertCount={alerts.filter(a => a.on).length} savedCount={saved.size} />
           </>
         )}
@@ -270,60 +275,101 @@ function TodayScreen({ places, saved, toggleSave, openDetail, showToast, openPla
         </button>
       </div>
 
-      {/* Minutes Saved + Efficiency */}
-      <div className="grid grid-cols-5 gap-3 mb-5">
-        <div className="col-span-3 wl-card p-5 wl-fade-up" style={{ background: "var(--color-primary)", color: "var(--color-primary-foreground)" }}>
-          <div className="flex items-center gap-1.5 text-[10px] font-semibold tracking-[0.18em] uppercase opacity-70 mb-2">
-            <Lightning size={12} weight="fill" /> Minutes saved today
+      {/* Minutes Saved hero with Daily Goal */}
+      {(() => {
+        const goal = 60;
+        const pct = Math.min(100, Math.round((minutesSavedToday / goal) * 100));
+        const remaining = Math.max(0, goal - minutesSavedToday);
+        const r = 26, circ = 2 * Math.PI * r;
+        const off = circ - (pct / 100) * circ;
+        return (
+          <div className="wl-card p-5 mb-4 wl-fade-up" style={{ background: "var(--color-primary)", color: "var(--color-primary-foreground)" }}>
+            <div className="flex items-center justify-between">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5 text-[10px] font-semibold tracking-[0.18em] uppercase opacity-70 mb-2">
+                  <Lightning size={12} weight="fill" /> Minutes saved today
+                </div>
+                <div className="text-[48px] leading-none font-extrabold">{minutesSavedToday}<span className="text-[16px] font-semibold ml-1.5 opacity-70">min</span></div>
+                <div className="text-[11px] opacity-70 mt-2">Reclaimed today · ≈ {Math.round(minutesSavedToday/60*10)/10}h this week</div>
+              </div>
+              <div className="relative w-[72px] h-[72px] shrink-0">
+                <svg viewBox="0 0 72 72" className="-rotate-90 w-full h-full">
+                  <circle cx="36" cy="36" r={r} stroke="rgba(255,255,255,0.18)" strokeWidth="6" fill="none" />
+                  <circle cx="36" cy="36" r={r} stroke="var(--color-accent)" strokeWidth="6" fill="none" strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={off} style={{ transition: "stroke-dashoffset 800ms" }} />
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <div className="text-[14px] font-extrabold leading-none">{pct}%</div>
+                  <div className="text-[8px] opacity-70 uppercase tracking-wider mt-0.5">Goal</div>
+                </div>
+              </div>
+            </div>
+            <div className="mt-4 pt-4 border-t border-white/15 flex items-center justify-between text-[12px]">
+              <span className="opacity-80">{minutesSavedToday} / {goal} min goal</span>
+              <span className="font-semibold">{remaining === 0 ? "Goal achieved 🎉" : `${remaining} min to go`}</span>
+            </div>
           </div>
-          <div className="text-[44px] leading-none font-extrabold">{minutesSavedToday}<span className="text-[16px] font-semibold ml-1.5 opacity-70">min</span></div>
-          <div className="text-[11px] opacity-70 mt-2">≈ {Math.round(minutesSavedToday/60*10)/10}h reclaimed this week</div>
-        </div>
-        <div className="col-span-2 wl-card p-4 flex flex-col items-center justify-center text-center wl-fade-up" style={{ animationDelay: "60ms" }}>
-          <div className="text-[10px] font-semibold tracking-[0.18em] uppercase mb-2" style={{ color: "var(--color-muted-foreground)" }}>Efficiency</div>
-          <ScoreRing value={efficiency} />
-          <div className="text-[10px] mt-1" style={{ color: "var(--color-muted-foreground)" }}>Above avg</div>
+        );
+      })()}
+
+      {/* Efficiency Score */}
+      <div className="wl-card p-4 mb-4 flex items-center gap-4 wl-fade-up" style={{ animationDelay: "60ms" }}>
+        <ScoreRing value={efficiency} />
+        <div className="flex-1 min-w-0">
+          <div className="text-[10px] font-semibold tracking-[0.18em] uppercase" style={{ color: "var(--color-muted-foreground)" }}>Efficiency score</div>
+          <div className="flex items-baseline gap-1.5 mt-1">
+            <span className="text-[22px] font-extrabold leading-none">{efficiency}</span>
+            <span className="text-[11px] font-medium" style={{ color: "var(--color-muted-foreground)" }}>/ 100</span>
+            <span className="ml-auto inline-flex items-center gap-0.5 text-[11px] font-semibold" style={{ color: "var(--color-success)" }}>
+              <TrendUp size={11} weight="bold" /> +5
+            </span>
+          </div>
+          <div className="text-[11px] mt-1" style={{ color: "var(--color-muted-foreground)" }}>Top 18% of users this week</div>
         </div>
       </div>
 
-      {/* Best Decision Right Now */}
-      <button onClick={() => openDetail(bestNow.id)} className="w-full text-left wl-card p-5 mb-5 wl-fade-up" style={{ animationDelay: "120ms", border: "1px solid var(--color-border)" }}>
-        <div className="flex items-center gap-1.5 text-[10px] font-semibold tracking-[0.18em] uppercase mb-2" style={{ color: "var(--color-muted-foreground)" }}>
+      {/* Best Decision Right Now — hero card */}
+      <div className="wl-card p-5 mb-5 wl-fade-up" style={{ animationDelay: "120ms", border: "1px solid var(--color-border)" }}>
+        <div className="flex items-center gap-1.5 text-[10px] font-semibold tracking-[0.18em] uppercase mb-3" style={{ color: "var(--color-muted-foreground)" }}>
           <Sparkle size={12} weight="fill" color="var(--color-accent)" /> Best decision right now
         </div>
-        <div className="flex items-start gap-3">
+        <button onClick={() => openDetail(bestNow.id)} className="w-full text-left flex items-start gap-3">
           <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-[26px] shrink-0" style={{ background: "var(--color-muted)" }}>{bestNow.emoji}</div>
           <div className="flex-1 min-w-0">
             <div className="text-[18px] font-bold leading-tight">{bestNow.name}</div>
-            <div className="text-[12px] mt-0.5" style={{ color: "var(--color-muted-foreground)" }}>{bestNow.category} · {bestNow.distance}</div>
-            <div className="mt-2.5 flex items-center gap-2 flex-wrap">
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[12px] font-semibold" style={{ background: "var(--q-free-bg)", color: "var(--q-free-text)" }}>
-                {bestNow.wait} min wait
-              </span>
-              <span className="text-[11px]" style={{ color: "var(--color-muted-foreground)" }}>{crowdLabel(bestNow.crowd).toLowerCase()}</span>
-            </div>
+            <div className="text-[12px] mt-0.5" style={{ color: "var(--color-muted-foreground)" }}>{bestNow.category} · {bestNow.distance} · {crowdLabel(bestNow.crowd).toLowerCase()}</div>
           </div>
-        </div>
-        <div className="mt-4 p-3 rounded-xl flex items-start gap-2" style={{ background: "var(--color-muted)" }}>
-          <Brain size={16} weight="duotone" color="var(--color-accent)" className="shrink-0 mt-0.5" />
-          <div className="text-[12px] leading-relaxed">
-            <span className="font-semibold">Save ~{timeSaved} min</span> vs your nearby alternatives. Quiet now, trend is {bestNow.trend === "down" ? "improving" : bestNow.trend === "up" ? "rising soon" : "stable"}.
-            <span className="ml-1 inline-flex items-center gap-0.5 font-semibold" style={{ color: "var(--color-accent)" }}>See why <CaretRight size={11} weight="bold" /></span>
+          <div className="text-right shrink-0">
+            <div className="text-[20px] font-extrabold leading-none" style={{ color: "var(--color-accent)" }}>−{timeSaved}<span className="text-[10px] font-semibold ml-0.5">min</span></div>
+            <div className="text-[9px] uppercase tracking-wider mt-1" style={{ color: "var(--color-muted-foreground)" }}>Saved</div>
           </div>
-        </div>
-      </button>
+        </button>
 
-      {/* Quick Planner CTA */}
-      <button onClick={openPlanner} className="w-full wl-card p-4 mb-6 flex items-center gap-3 wl-fade-up" style={{ animationDelay: "180ms" }}>
-        <div className="w-11 h-11 rounded-2xl flex items-center justify-center" style={{ background: "var(--color-accent)", color: "white" }}>
-          <Path size={20} weight="bold" />
+        {/* Reasoning checklist */}
+        <div className="mt-4 p-3.5 rounded-2xl space-y-2" style={{ background: "var(--color-muted)" }}>
+          <div className="text-[10px] font-semibold tracking-[0.18em] uppercase" style={{ color: "var(--color-muted-foreground)" }}>Recommended because</div>
+          {[
+            `Lowest wait nearby — only ${bestNow.wait} min`,
+            bestNow.open ? "Open now" : "Opens soon",
+            `${timeSaved} min faster than alternatives`,
+            bestNow.trend === "down" ? "Crowd clearing in the next 30 min" : "Quiet for the next 45 minutes",
+          ].map((r, i) => (
+            <div key={i} className="flex items-start gap-2 text-[12px] leading-snug">
+              <Check size={14} weight="bold" color="var(--color-success)" className="shrink-0 mt-0.5" />
+              <span>{r}</span>
+            </div>
+          ))}
         </div>
-        <div className="flex-1 text-left">
-          <div className="text-[14px] font-semibold leading-tight">Plan multiple errands</div>
-          <div className="text-[11px] mt-0.5" style={{ color: "var(--color-muted-foreground)" }}>AI orders stops to save the most time</div>
+
+        {/* CTAs */}
+        <div className="mt-4 grid grid-cols-3 gap-2">
+          <button onClick={() => { window.open(`https://maps.google.com/?q=${encodeURIComponent(bestNow.address)}`); }} className="col-span-2 h-12 rounded-xl text-[13px] font-semibold flex items-center justify-center gap-1.5" style={{ background: "var(--color-primary)", color: "var(--color-primary-foreground)" }}>
+            <NavigationArrow size={14} weight="fill" /> Go now
+          </button>
+          <button onClick={() => openDetail(bestNow.id)} className="h-12 rounded-xl text-[12px] font-semibold flex items-center justify-center gap-1" style={{ background: "var(--color-card)", border: "1px solid var(--color-border)" }}>
+            Why? <CaretRight size={12} weight="bold" />
+          </button>
         </div>
-        <CaretRight size={18} weight="bold" style={{ color: "var(--color-muted-foreground)" }} />
-      </button>
+      </div>
 
       {/* Top 3 Opportunities */}
       <SectionTitle>Top opportunities right now</SectionTitle>
@@ -438,6 +484,12 @@ function PlaceCard({ place: p, saved, onTap, onSave }: { place: Place; saved: bo
             <div className="h-full wl-bar-grow rounded-full" style={{ width: `${p.crowd}%`, background: c.solid }} />
           </div>
           <div className="text-[11px] mt-1.5" style={{ color: "var(--color-muted-foreground)" }}>{p.crowd}% full · Best time today: <span className="font-semibold" style={{ color: "var(--color-foreground)" }}>{p.bestTime}</span></div>
+          <div className="mt-2.5 pt-2.5 flex items-center gap-2 text-[10px]" style={{ borderTop: "1px dashed var(--color-border)", color: "var(--color-muted-foreground)" }}>
+            <span className="inline-flex items-center gap-0.5"><ArrowsClockwise size={10} weight="bold" /> 2 min ago</span>
+            <span>·</span>
+            <span className="inline-flex items-center gap-0.5"><ShieldCheck size={10} weight="fill" color="var(--color-success)" /> {p.verifiedBy} verified</span>
+            <span className="ml-auto inline-flex items-center gap-0.5 font-semibold" style={{ color: "var(--color-foreground)" }}><Brain size={10} weight="duotone" /> {p.confidence}%</span>
+          </div>
         </div>
       </button>
     </div>
@@ -706,6 +758,9 @@ function ProfileScreen({ savedCount, alertCount }: { savedCount: number; alertCo
     { Icon: Target, t: "Time Wizard", earned: false },
     { Icon: Confetti, t: "Local Legend", earned: false },
   ];
+  const [reportOpen, setReportOpen] = useState(false);
+  // suppress unused warnings
+  void savedCount; void alertCount;
 
   return (
     <div className="px-5 pt-12">
@@ -750,13 +805,45 @@ function ProfileScreen({ savedCount, alertCount }: { savedCount: number; alertCo
         </div>
       </div>
 
-      {/* Stats grid */}
-      <div className="grid grid-cols-2 gap-3 mb-6">
-        <BigStat label="This month" value="3h 48m" sub="↑ 22% vs last" accent="var(--color-accent)" />
-        <BigStat label="Efficiency" value="78" sub="Above avg" />
-        <BigStat label="Reports" value="24" sub="Trusted reporter" accent="var(--color-success)" />
-        <BigStat label="Active alerts" value={String(alertCount)} sub={`${savedCount} saved`} accent="var(--color-warning)" />
+      {/* Community Impact */}
+      <SectionTitle>Community impact</SectionTitle>
+      <div className="wl-card p-5 mb-5">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0" style={{ background: "var(--color-accent)", color: "white" }}>
+            <Users size={20} weight="duotone" />
+          </div>
+          <div className="flex-1">
+            <div className="text-[16px] font-bold leading-tight">Community Hero</div>
+            <div className="text-[11px] mt-0.5" style={{ color: "var(--color-muted-foreground)" }}>Trusted contributor · Level 3</div>
+          </div>
+        </div>
+        <div className="grid grid-cols-3 gap-2 text-center">
+          <div className="p-3 rounded-2xl" style={{ background: "var(--color-muted)" }}>
+            <div className="text-[20px] font-extrabold leading-none" style={{ color: "var(--color-accent)" }}>1,240</div>
+            <div className="text-[9px] uppercase tracking-wider mt-1.5" style={{ color: "var(--color-muted-foreground)" }}>People helped</div>
+          </div>
+          <div className="p-3 rounded-2xl" style={{ background: "var(--color-muted)" }}>
+            <div className="text-[20px] font-extrabold leading-none">87</div>
+            <div className="text-[9px] uppercase tracking-wider mt-1.5" style={{ color: "var(--color-muted-foreground)" }}>Reports</div>
+          </div>
+          <div className="p-3 rounded-2xl" style={{ background: "var(--color-muted)" }}>
+            <div className="text-[20px] font-extrabold leading-none" style={{ color: "var(--color-success)" }}>94%</div>
+            <div className="text-[9px] uppercase tracking-wider mt-1.5" style={{ color: "var(--color-muted-foreground)" }}>Accuracy</div>
+          </div>
+        </div>
       </div>
+
+      {/* Weekly Report CTA */}
+      <button onClick={() => setReportOpen(true)} className="w-full wl-card p-4 mb-6 flex items-center gap-3">
+        <div className="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0" style={{ background: "var(--color-foreground)", color: "var(--color-background)" }}>
+          <ChartLineUp size={20} weight="duotone" />
+        </div>
+        <div className="flex-1 text-left">
+          <div className="text-[14px] font-semibold leading-tight">This week's report</div>
+          <div className="text-[11px] mt-0.5" style={{ color: "var(--color-muted-foreground)" }}>4h 21m saved · share your impact</div>
+        </div>
+        <CaretRight size={18} weight="bold" style={{ color: "var(--color-muted-foreground)" }} />
+      </button>
 
       {/* Badges */}
       <div className="flex items-end justify-between mb-3">
@@ -782,6 +869,72 @@ function ProfileScreen({ savedCount, alertCount }: { savedCount: number; alertCo
             {l} <CaretRight size={16} weight="bold" style={{ color: "var(--color-muted-foreground)" }} />
           </button>
         ))}
+      </div>
+
+      {reportOpen && <WeeklyReport onClose={() => setReportOpen(false)} />}
+    </div>
+  );
+}
+
+function WeeklyReport({ onClose }: { onClose: () => void }) {
+  const stats = [
+    { label: "Hours saved", value: "4h 21m", accent: "var(--color-accent)" },
+    { label: "Places visited", value: "8" },
+    { label: "Alerts triggered", value: "12" },
+    { label: "Community helped", value: "124", accent: "var(--color-success)" },
+  ];
+  return (
+    <div className="fixed inset-0 z-[110] flex justify-center" style={{ background: "rgba(0,0,0,0.4)" }}>
+      <div className="relative w-full max-w-[430px] h-full overflow-y-auto wl-slide-in-right" style={{ background: "var(--color-background)" }}>
+        <div className="sticky top-0 z-10 flex items-center justify-between px-4 pt-12 pb-3" style={{ background: "var(--color-background)" }}>
+          <button onClick={onClose} className="w-10 h-10 rounded-full flex items-center justify-center wl-card"><CaretLeft size={18} weight="bold" /></button>
+          <div className="text-[14px] font-semibold">Weekly report</div>
+          <div className="w-10" />
+        </div>
+        <div className="px-5 pb-32">
+          <div className="text-[11px] uppercase tracking-[0.18em] font-semibold" style={{ color: "var(--color-muted-foreground)" }}>This week</div>
+          <h1 className="text-[28px] font-bold leading-tight mt-1">You reclaimed <span style={{ color: "var(--color-accent)" }}>4h 21m</span></h1>
+          <p className="serif-italic text-[16px] mt-2 mb-6" style={{ color: "var(--color-muted-foreground)" }}>That's more than half a workday — back to you.</p>
+
+          <div className="grid grid-cols-2 gap-3 mb-5">
+            {stats.map(s => (
+              <div key={s.label} className="wl-card p-4">
+                <div className="text-[10px] uppercase tracking-wider font-semibold" style={{ color: "var(--color-muted-foreground)" }}>{s.label}</div>
+                <div className="text-[22px] font-extrabold leading-none mt-1.5" style={{ color: s.accent || "var(--color-foreground)" }}>{s.value}</div>
+              </div>
+            ))}
+          </div>
+
+          <div className="wl-card p-5 mb-5">
+            <div className="flex items-center justify-between mb-3">
+              <div className="text-[10px] uppercase tracking-[0.18em] font-semibold" style={{ color: "var(--color-muted-foreground)" }}>Efficiency score</div>
+              <span className="text-[11px] font-semibold inline-flex items-center gap-0.5" style={{ color: "var(--color-success)" }}><TrendUp size={11} weight="bold" /> +4</span>
+            </div>
+            <div className="flex items-baseline gap-2"><span className="text-[40px] font-extrabold leading-none">82</span><span className="text-[12px]" style={{ color: "var(--color-muted-foreground)" }}>/ 100</span></div>
+            <div className="text-[11px] mt-2" style={{ color: "var(--color-muted-foreground)" }}>Most efficient day: <span className="font-semibold" style={{ color: "var(--color-foreground)" }}>Wednesday</span></div>
+          </div>
+
+          <div className="wl-card p-5 mb-5 flex items-center gap-3" style={{ background: "var(--color-primary)", color: "var(--color-primary-foreground)" }}>
+            <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: "rgba(255,255,255,0.12)" }}>
+              <Trophy size={22} weight="duotone" />
+            </div>
+            <div className="flex-1">
+              <div className="text-[10px] uppercase tracking-[0.18em] font-semibold opacity-70">Top achievement</div>
+              <div className="text-[16px] font-bold leading-tight mt-0.5">Early Bird</div>
+              <div className="text-[11px] opacity-70">Beat the morning rush 5 days in a row</div>
+            </div>
+          </div>
+
+          {/* Share card */}
+          <div className="wl-card p-5 mb-5" style={{ background: "var(--color-accent)", color: "white" }}>
+            <div className="text-[10px] uppercase tracking-[0.18em] font-semibold opacity-80 mb-2">Share your impact</div>
+            <div className="text-[18px] font-bold leading-snug">"I saved 4h 21m this week using WaitLess."</div>
+            <div className="text-[11px] opacity-80 mt-2">Score 82 · Early Bird badge</div>
+            <button className="mt-4 w-full h-12 rounded-xl text-[13px] font-semibold flex items-center justify-center gap-1.5" style={{ background: "white", color: "var(--color-accent)" }}>
+              <ShareNetwork size={16} weight="bold" /> Share card
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -885,6 +1038,42 @@ function Detail({ place: p, places, saved, onClose, onToggleSave, onAlert, openD
                 Best time today is <span className="font-semibold">{p.bestTime}</span> — expected wait <span className="font-semibold">~{p.bestWait} min</span>. In the next hour wait likely climbs to <span className="font-semibold">{Math.round(p.wait * 1.15)} min</span>.
               </div>
             </div>
+          </div>
+
+          {/* Forecast card */}
+          <div className="wl-card p-5 mb-4">
+            <div className="text-[13px] font-semibold mb-1">Forecast</div>
+            <div className="text-[11px] mb-4" style={{ color: "var(--color-muted-foreground)" }}>Expected wait over the next 3 hours</div>
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { label: "In 1 hour", w: Math.max(0, Math.round(p.wait * 0.65)) },
+                { label: "In 2 hours", w: Math.max(0, Math.round(p.wait * 0.42)) },
+                { label: "In 3 hours", w: Math.max(0, Math.round(p.wait * 0.22)) },
+              ].map(f => {
+                const fc = waitColor(f.w);
+                return (
+                  <div key={f.label} className="rounded-2xl p-3 text-center" style={{ background: "var(--color-muted)" }}>
+                    <div className="text-[10px] uppercase tracking-wider font-semibold" style={{ color: "var(--color-muted-foreground)" }}>{f.label}</div>
+                    <div className="text-[22px] font-extrabold leading-none mt-1.5" style={{ color: fc.solid }}>{f.w}<span className="text-[10px] font-semibold ml-0.5" style={{ color: "var(--color-muted-foreground)" }}>min</span></div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Best time card */}
+          <div className="wl-card p-5 mb-4 flex items-center gap-4">
+            <div className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0" style={{ background: "var(--q-free-bg)" }}>
+              <Clock size={24} weight="duotone" color="var(--q-free-text)" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-[10px] uppercase tracking-[0.18em] font-semibold" style={{ color: "var(--color-muted-foreground)" }}>Best time today</div>
+              <div className="text-[24px] font-extrabold leading-tight mt-0.5">{p.bestTime}</div>
+              <div className="text-[11px] mt-1" style={{ color: "var(--color-muted-foreground)" }}>Expected wait ~{p.bestWait} min · {p.confidence}% confidence</div>
+            </div>
+            <button onClick={onAlert} className="shrink-0 w-10 h-10 rounded-full flex items-center justify-center" style={{ background: "var(--color-primary)", color: "var(--color-primary-foreground)" }}>
+              <Bell size={16} weight="fill" />
+            </button>
           </div>
 
           {/* Actions */}

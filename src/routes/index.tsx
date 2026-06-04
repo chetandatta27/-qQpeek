@@ -758,6 +758,9 @@ function ProfileScreen({ savedCount, alertCount }: { savedCount: number; alertCo
     { Icon: Target, t: "Time Wizard", earned: false },
     { Icon: Confetti, t: "Local Legend", earned: false },
   ];
+  const [reportOpen, setReportOpen] = useState(false);
+  // suppress unused warnings
+  void savedCount; void alertCount;
 
   return (
     <div className="px-5 pt-12">

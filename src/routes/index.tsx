@@ -484,6 +484,12 @@ function PlaceCard({ place: p, saved, onTap, onSave }: { place: Place; saved: bo
             <div className="h-full wl-bar-grow rounded-full" style={{ width: `${p.crowd}%`, background: c.solid }} />
           </div>
           <div className="text-[11px] mt-1.5" style={{ color: "var(--color-muted-foreground)" }}>{p.crowd}% full · Best time today: <span className="font-semibold" style={{ color: "var(--color-foreground)" }}>{p.bestTime}</span></div>
+          <div className="mt-2.5 pt-2.5 flex items-center gap-2 text-[10px]" style={{ borderTop: "1px dashed var(--color-border)", color: "var(--color-muted-foreground)" }}>
+            <span className="inline-flex items-center gap-0.5"><ArrowsClockwise size={10} weight="bold" /> 2 min ago</span>
+            <span>·</span>
+            <span className="inline-flex items-center gap-0.5"><ShieldCheck size={10} weight="fill" color="var(--color-success)" /> {p.verifiedBy} verified</span>
+            <span className="ml-auto inline-flex items-center gap-0.5 font-semibold" style={{ color: "var(--color-foreground)" }}><Brain size={10} weight="duotone" /> {p.confidence}%</span>
+          </div>
         </div>
       </button>
     </div>

@@ -85,6 +85,8 @@ function App() {
   const [toast, setToast] = useState<string | null>(null);
   const [alertModalFor, setAlertModalFor] = useState<string | null>(null);
   const [plannerOpen, setPlannerOpen] = useState(false);
+  const [notificationSheetOpen, setNotificationSheetOpen] = useState(false);
+  const [hasInteracted, setHasInteracted] = useState(false);
 
   useEffect(() => {
     const t1 = setTimeout(() => setStage("onboarding"), 1700);
@@ -98,8 +100,19 @@ function App() {
     return () => clearInterval(i);
   }, []);
 
+  // Show notification sheet after user interaction
+  useEffect(() => {
+    if (hasInteracted && stage === "app" && !notificationSheetOpen) {
+      const timer = setTimeout(() => {
+        setNotificationSheetOpen(true);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [hasInteracted, stage, notificationSheetOpen]);
+
   function showToast(m: string) { setToast(m); setTimeout(() => setToast(null), 2600); }
   function toggleSave(id: string) {
+    setHasInteracted(true);
     setSaved(s => { const n = new Set(s); if (n.has(id)) { n.delete(id); showToast("Removed from Saved"); } else { n.add(id); showToast("Saved to favourites"); } return n; });
   }
   function addAlert(placeId: string, threshold: number) {
@@ -115,7 +128,7 @@ function App() {
       <div className="relative w-full max-w-[430px] min-h-screen overflow-hidden" style={{ background: "var(--color-background)" }}>
         {stage === "splash" && <Splash />}
         {stage === "onboarding" && (
-          <Onboarding step={obStep} onNext={() => setObStep(s => s + 1)} onDone={() => setStage("app")} />
+          <Onboarding step={obStep} onNext={() => setObStep(s => Math.min(s + 1, 2))} onDone={() => setStage("app")} />
         )}
         {stage === "app" && (
           <>
@@ -149,6 +162,40 @@ function App() {
             {toast}
           </div>
         )}
+        {notificationSheetOpen && (
+          <div className="fixed inset-0 z-[130] flex items-end justify-center">
+            <div className="absolute inset-0 bg-black/50" onClick={() => setNotificationSheetOpen(false)} />
+            <div className="relative w-full max-w-[430px] bg-background rounded-t-3xl p-6 wl-slide-up">
+              <div className="w-12 h-1 bg-gray-300 rounded-full mx-auto mb-6" />
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: "var(--color-primary)/10" }}>
+                  <Bell size={24} weight="duotone" style={{ color: "var(--color-primary)" }} />
+                </div>
+                <h3 className="text-[20px] font-bold">Get alerts when wait times drop</h3>
+              </div>
+              <p className="text-[15px] mb-6" style={{ color: "var(--color-muted-foreground)" }}>
+                We'll notify you when your saved places have shorter wait times.
+              </p>
+              <button
+                onClick={() => {
+                  setNotificationSheetOpen(false);
+                  showToast("Notifications enabled");
+                }}
+                className="w-full h-12 rounded-2xl text-[15px] font-semibold mb-3"
+                style={{ background: "var(--color-primary)", color: "var(--color-primary-foreground)" }}
+              >
+                Enable Notifications
+              </button>
+              <button
+                onClick={() => setNotificationSheetOpen(false)}
+                className="w-full h-12 rounded-2xl text-[15px] font-semibold"
+                style={{ background: "var(--color-card)", color: "var(--color-foreground)", border: "1px solid var(--color-border)" }}
+              >
+                Maybe Later
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -176,38 +223,142 @@ function Splash() {
 
 /* ========================== ONBOARDING ========================== */
 function Onboarding({ step, onNext, onDone }: { step: number; onNext: () => void; onDone: () => void }) {
-  const slides = [
-    { tag: "Your day", title: "Save 2–5 hours every month", body: "WaitLess is your personal time coach. We tell you the best time to go anywhere — so you never wait again.", Icon: ClockCountdown },
-    { tag: "AI guidance", title: "One clear decision, every time", body: "No more guessing. Our AI ranks every option by minutes saved and tells you exactly where to go right now.", Icon: Brain },
-    { tag: "Smart alerts", title: "We ping you when it's clear", body: "Set a wait threshold once. We watch the crowd for you and notify you the moment it drops.", Icon: Bell },
-    { tag: "Plan ahead", title: "Run errands the smart way", body: "Plan multiple stops in one trip. Our planner orders them by travel + wait — saving you serious time.", Icon: Path },
-  ];
-  const last = step >= slides.length - 1;
-  const s = slides[Math.min(step, slides.length - 1)];
-
-  return (
-    <div className="absolute inset-0 flex flex-col px-6 pt-16 pb-10 wl-fade-up" key={step}>
-      <div className="flex items-center justify-between mb-12">
-        <span className="text-[11px] font-semibold tracking-[0.2em] uppercase" style={{ color: "var(--color-muted-foreground)" }}>{s.tag}</span>
-        <button onClick={onDone} className="text-[13px] font-medium" style={{ color: "var(--color-muted-foreground)" }}>Skip</button>
-      </div>
-      <div className="flex-1 flex flex-col items-center justify-center text-center">
-        <div className="w-28 h-28 rounded-[32px] flex items-center justify-center mb-10 wl-shadow-lg" style={{ background: "var(--color-card)" }}>
-          <s.Icon size={56} weight="duotone" color="var(--color-foreground)" />
+  // Screen 1: Login
+  if (step === 0) {
+    return (
+      <div className="absolute inset-0 flex flex-col px-6 pt-16 pb-10 wl-fade-up">
+        <div className="flex-1 flex flex-col items-center justify-center text-center">
+          <div className="w-20 h-20 rounded-[26px] flex items-center justify-center mb-8" style={{ background: "var(--color-primary)" }}>
+            <Hourglass size={36} weight="duotone" color="#F7F5EF" />
+          </div>
+          <h1 className="text-[36px] leading-[1.1] font-bold mb-4">Save time, every day</h1>
+          <p className="text-[17px] leading-relaxed mb-12" style={{ color: "var(--color-muted-foreground)" }}>
+            Know the best time to go before you leave.
+          </p>
+          <div className="flex gap-8 mb-12">
+            <div className="text-center">
+              <div className="text-[28px] font-bold">12k+</div>
+              <div className="text-[13px]" style={{ color: "var(--color-muted-foreground)" }}>users</div>
+            </div>
+            <div className="text-center">
+              <div className="text-[28px] font-bold">3.8h</div>
+              <div className="text-[13px]" style={{ color: "var(--color-muted-foreground)" }}>saved/month</div>
+            </div>
+          </div>
         </div>
-        <h1 className="text-[32px] leading-[1.1] font-bold max-w-[320px]">{s.title}</h1>
-        <p className="serif-italic text-[18px] mt-4 max-w-[320px]" style={{ color: "var(--color-muted-foreground)" }}>{s.body}</p>
+        <div className="flex flex-col gap-3">
+          <button onClick={onNext} className="w-full h-14 rounded-2xl text-[15px] font-semibold flex items-center justify-center gap-3" style={{ background: "var(--color-primary)", color: "var(--color-primary-foreground)" }}>
+            Continue with Google
+          </button>
+          <button onClick={onNext} className="w-full h-14 rounded-2xl text-[15px] font-semibold flex items-center justify-center gap-3" style={{ background: "var(--color-card)", color: "var(--color-foreground)", border: "1px solid var(--color-border)" }}>
+            Continue with Apple
+          </button>
+          <button onClick={onNext} className="w-full h-14 rounded-2xl text-[15px] font-semibold flex items-center justify-center gap-3" style={{ background: "var(--color-card)", color: "var(--color-foreground)", border: "1px solid var(--color-border)" }}>
+            Continue with Phone
+          </button>
+        </div>
       </div>
-      <div className="flex justify-center gap-2 mb-8">
-        {slides.map((_, i) => (
-          <div key={i} className="h-1.5 rounded-full transition-all" style={{ width: i === step ? 28 : 8, background: i === step ? "var(--color-primary)" : "var(--color-border)" }} />
-        ))}
+    );
+  }
+
+  // Screen 2: Choose Interests
+  if (step === 1) {
+    const interests = [
+      { id: 'hospital', emoji: '🏥', label: 'Hospital' },
+      { id: 'bank', emoji: '🏦', label: 'Bank' },
+      { id: 'gym', emoji: '💪', label: 'Gym' },
+      { id: 'pharmacy', emoji: '💊', label: 'Pharmacy' },
+      { id: 'cafe', emoji: '☕', label: 'Café' },
+      { id: 'restaurant', emoji: '🍽️', label: 'Restaurant' },
+      { id: 'shopping', emoji: '🛒', label: 'Shopping' },
+      { id: 'petrol', emoji: '⛽', label: 'Petrol' },
+    ];
+    const [selected, setSelected] = useState<string[]>([]);
+
+    const toggleInterest = (id: string) => {
+      if (selected.includes(id)) {
+        setSelected(selected.filter(s => s !== id));
+      } else if (selected.length < 5) {
+        setSelected([...selected, id]);
+      }
+    };
+
+    return (
+      <div className="absolute inset-0 flex flex-col px-6 pt-16 pb-10 wl-fade-up">
+        <div className="flex-1">
+          <h1 className="text-[32px] leading-[1.1] font-bold mb-3">What places matter most?</h1>
+          <p className="text-[17px] mb-8" style={{ color: "var(--color-muted-foreground)" }}>
+            Choose up to 5.
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            {interests.map(interest => (
+              <button
+                key={interest.id}
+                onClick={() => toggleInterest(interest.id)}
+                className={`p-4 rounded-2xl flex flex-col items-center gap-2 transition-all ${
+                  selected.includes(interest.id)
+                    ? 'wl-shadow-lg'
+                    : 'opacity-60 hover:opacity-100'
+                }`}
+                style={{
+                  background: selected.includes(interest.id) ? 'var(--color-primary)' : 'var(--color-card)',
+                  color: selected.includes(interest.id) ? 'var(--color-primary-foreground)' : 'var(--color-foreground)',
+                  border: selected.includes(interest.id) ? 'none' : '1px solid var(--color-border)',
+                }}
+              >
+                <span className="text-[28px]">{interest.emoji}</span>
+                <span className="text-[14px] font-medium">{interest.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+        <button onClick={onNext} className="w-full h-14 rounded-2xl text-[15px] font-semibold" style={{ background: "var(--color-primary)", color: "var(--color-primary-foreground)" }}>
+          Continue
+        </button>
       </div>
-      <button onClick={() => (last ? onDone() : onNext())} className="w-full h-14 rounded-2xl text-[15px] font-semibold" style={{ background: "var(--color-primary)", color: "var(--color-primary-foreground)" }}>
-        {last ? "Get started" : "Continue"}
-      </button>
-    </div>
-  );
+    );
+  }
+
+  // Screen 3: Location Permission
+  if (step === 2) {
+    return (
+      <div className="absolute inset-0 flex flex-col px-6 pt-16 pb-10 wl-fade-up">
+        <div className="flex-1 flex flex-col items-center justify-center text-center">
+          <div className="w-20 h-20 rounded-full flex items-center justify-center mb-8" style={{ background: "var(--color-primary)/10" }}>
+            <MapPin size={36} weight="duotone" style={{ color: "var(--color-primary)" }} />
+          </div>
+          <h1 className="text-[32px] leading-[1.1] font-bold mb-4">Find the best time nearby</h1>
+          <p className="text-[17px] leading-relaxed mb-12" style={{ color: "var(--color-muted-foreground)" }}>
+            Allow location to discover nearby places and smarter recommendations.
+          </p>
+          <div className="w-full max-w-sm text-left mb-12">
+            <div className="flex items-start gap-3 mb-4">
+              <Check size={20} weight="bold" style={{ color: "var(--color-success)" }} />
+              <span className="text-[15px]" style={{ color: "var(--color-muted-foreground)" }}>Location is never shared publicly</span>
+            </div>
+            <div className="flex items-start gap-3 mb-4">
+              <Check size={20} weight="bold" style={{ color: "var(--color-success)" }} />
+              <span className="text-[15px]" style={{ color: "var(--color-muted-foreground)" }}>Used only for recommendations</span>
+            </div>
+            <div className="flex items-start gap-3">
+              <Check size={20} weight="bold" style={{ color: "var(--color-success)" }} />
+              <span className="text-[15px]" style={{ color: "var(--color-muted-foreground)" }}>Delete your data anytime</span>
+            </div>
+          </div>
+        </div>
+        <div className="flex flex-col gap-3">
+          <button onClick={onDone} className="w-full h-14 rounded-2xl text-[15px] font-semibold" style={{ background: "var(--color-primary)", color: "var(--color-primary-foreground)" }}>
+            Allow Location
+          </button>
+          <button onClick={onDone} className="w-full h-14 rounded-2xl text-[15px] font-semibold" style={{ background: "var(--color-card)", color: "var(--color-foreground)", border: "1px solid var(--color-border)" }}>
+            Not Now
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
 }
 
 /* =========================== TODAY (was HOME) =========================== */
@@ -275,41 +426,29 @@ function TodayScreen({ places, saved, toggleSave, openDetail, showToast, openPla
         </button>
       </div>
 
-      {/* Minutes Saved hero with Daily Goal */}
-      {(() => {
-        const goal = 60;
-        const pct = Math.min(100, Math.round((minutesSavedToday / goal) * 100));
-        const remaining = Math.max(0, goal - minutesSavedToday);
-        const r = 26, circ = 2 * Math.PI * r;
-        const off = circ - (pct / 100) * circ;
-        return (
-          <div className="wl-card p-5 mb-4 wl-fade-up" style={{ background: "var(--color-primary)", color: "var(--color-primary-foreground)" }}>
-            <div className="flex items-center justify-between">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1.5 text-[10px] font-semibold tracking-[0.18em] uppercase opacity-70 mb-2">
-                  <Lightning size={12} weight="fill" /> Minutes saved today
-                </div>
-                <div className="text-[48px] leading-none font-extrabold">{minutesSavedToday}<span className="text-[16px] font-semibold ml-1.5 opacity-70">min</span></div>
-                <div className="text-[11px] opacity-70 mt-2">Reclaimed today · ≈ {Math.round(minutesSavedToday/60*10)/10}h this week</div>
-              </div>
-              <div className="relative w-[72px] h-[72px] shrink-0">
-                <svg viewBox="0 0 72 72" className="-rotate-90 w-full h-full">
-                  <circle cx="36" cy="36" r={r} stroke="rgba(255,255,255,0.18)" strokeWidth="6" fill="none" />
-                  <circle cx="36" cy="36" r={r} stroke="var(--color-accent)" strokeWidth="6" fill="none" strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={off} style={{ transition: "stroke-dashoffset 800ms" }} />
-                </svg>
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <div className="text-[14px] font-extrabold leading-none">{pct}%</div>
-                  <div className="text-[8px] opacity-70 uppercase tracking-wider mt-0.5">Goal</div>
+      {/* Value-first hero: Today you could save */}
+      <div className="wl-card p-5 mb-4 wl-fade-up">
+        <div className="flex items-center gap-1.5 text-[11px] font-semibold tracking-[0.18em] uppercase mb-4" style={{ color: "var(--color-muted-foreground)" }}>
+          <Lightning size={12} weight="fill" /> Today you could save
+        </div>
+        <div className="space-y-3">
+          {opportunities.map((place, idx) => (
+            <div key={place.id} className="flex items-center justify-between p-3 rounded-xl" style={{ background: "var(--color-background)" }}>
+              <div className="flex items-center gap-3">
+                <span className="text-[24px]">{place.emoji}</span>
+                <div>
+                  <div className="text-[15px] font-semibold">{place.name}</div>
+                  <div className="text-[12px]" style={{ color: "var(--color-muted-foreground)" }}>{place.distance}</div>
                 </div>
               </div>
+              <div className="text-right">
+                <div className="text-[16px] font-bold" style={{ color: "var(--color-success)" }}>Save {place.savings} min</div>
+                <div className="text-[11px]" style={{ color: "var(--color-muted-foreground)" }}>{place.wait} min wait</div>
+              </div>
             </div>
-            <div className="mt-4 pt-4 border-t border-white/15 flex items-center justify-between text-[12px]">
-              <span className="opacity-80">{minutesSavedToday} / {goal} min goal</span>
-              <span className="font-semibold">{remaining === 0 ? "Goal achieved 🎉" : `${remaining} min to go`}</span>
-            </div>
-          </div>
-        );
-      })()}
+          ))}
+        </div>
+      </div>
 
       {/* Efficiency Score */}
       <div className="wl-card p-4 mb-4 flex items-center gap-4 wl-fade-up" style={{ animationDelay: "60ms" }}>

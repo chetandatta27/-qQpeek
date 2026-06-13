@@ -69,12 +69,12 @@ function TrendIcon({ t, className = "" }: { t: Trend; className?: string }) {
 }
 
 /* ============================== APP ============================== */
-type Stage = "splash" | "onboarding" | "app";
+type Stage = "splash" | "onboarding" | "loading" | "app";
 type Tab = "today" | "map" | "alerts" | "saved" | "profile";
 
 function App() {
   const [stage, setStage] = useState<Stage>("splash");
-  const [obStep, setObStep] = useState(0);
+  
   const [tab, setTab] = useState<Tab>("today");
   const [places, setPlaces] = useState<Place[]>(SEED);
   const [saved, setSaved] = useState<Set<string>>(new Set(["p3", "p4"]));
@@ -85,8 +85,6 @@ function App() {
   const [toast, setToast] = useState<string | null>(null);
   const [alertModalFor, setAlertModalFor] = useState<string | null>(null);
   const [plannerOpen, setPlannerOpen] = useState(false);
-  const [notificationSheetOpen, setNotificationSheetOpen] = useState(false);
-  const [hasInteracted, setHasInteracted] = useState(false);
 
   useEffect(() => {
     const t1 = setTimeout(() => setStage("onboarding"), 1700);
@@ -100,19 +98,8 @@ function App() {
     return () => clearInterval(i);
   }, []);
 
-  // Show notification sheet after user interaction
-  useEffect(() => {
-    if (hasInteracted && stage === "app" && !notificationSheetOpen) {
-      const timer = setTimeout(() => {
-        setNotificationSheetOpen(true);
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [hasInteracted, stage, notificationSheetOpen]);
-
   function showToast(m: string) { setToast(m); setTimeout(() => setToast(null), 2600); }
   function toggleSave(id: string) {
-    setHasInteracted(true);
     setSaved(s => { const n = new Set(s); if (n.has(id)) { n.delete(id); showToast("Removed from Saved"); } else { n.add(id); showToast("Saved to favourites"); } return n; });
   }
   function addAlert(placeId: string, threshold: number) {
@@ -128,7 +115,10 @@ function App() {
       <div className="relative w-full max-w-[430px] min-h-screen overflow-hidden" style={{ background: "var(--color-background)" }}>
         {stage === "splash" && <Splash />}
         {stage === "onboarding" && (
-          <Onboarding step={obStep} onNext={() => setObStep(s => Math.min(s + 1, 2))} onDone={() => setStage("app")} />
+          <Onboarding onDone={() => setStage("loading")} />
+        )}
+        {stage === "loading" && (
+          <LoadingScreen onDone={() => setStage("app")} />
         )}
         {stage === "app" && (
           <>
@@ -162,40 +152,6 @@ function App() {
             {toast}
           </div>
         )}
-        {notificationSheetOpen && (
-          <div className="fixed inset-0 z-[130] flex items-end justify-center">
-            <div className="absolute inset-0 bg-black/50" onClick={() => setNotificationSheetOpen(false)} />
-            <div className="relative w-full max-w-[430px] bg-background rounded-t-3xl p-6 wl-slide-up">
-              <div className="w-12 h-1 bg-gray-300 rounded-full mx-auto mb-6" />
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: "var(--color-primary)/10" }}>
-                  <Bell size={24} weight="duotone" style={{ color: "var(--color-primary)" }} />
-                </div>
-                <h3 className="text-[20px] font-bold">Get alerts when wait times drop</h3>
-              </div>
-              <p className="text-[15px] mb-6" style={{ color: "var(--color-muted-foreground)" }}>
-                We'll notify you when your saved places have shorter wait times.
-              </p>
-              <button
-                onClick={() => {
-                  setNotificationSheetOpen(false);
-                  showToast("Notifications enabled");
-                }}
-                className="w-full h-12 rounded-2xl text-[15px] font-semibold mb-3"
-                style={{ background: "var(--color-primary)", color: "var(--color-primary-foreground)" }}
-              >
-                Enable Notifications
-              </button>
-              <button
-                onClick={() => setNotificationSheetOpen(false)}
-                className="w-full h-12 rounded-2xl text-[15px] font-semibold"
-                style={{ background: "var(--color-card)", color: "var(--color-foreground)", border: "1px solid var(--color-border)" }}
-              >
-                Maybe Later
-              </button>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
@@ -222,144 +178,742 @@ function Splash() {
 }
 
 /* ========================== ONBOARDING ========================== */
-function Onboarding({ step, onNext, onDone }: { step: number; onNext: () => void; onDone: () => void }) {
-  // Screen 1: Login
-  if (step === 0) {
-    return (
-      <div className="absolute inset-0 flex flex-col px-6 pt-16 pb-10 wl-fade-up">
-        <div className="flex-1 flex flex-col items-center justify-center text-center">
-          <div className="w-20 h-20 rounded-[26px] flex items-center justify-center mb-8" style={{ background: "var(--color-primary)" }}>
-            <Hourglass size={36} weight="duotone" color="#F7F5EF" />
+type GoalKey = "save" | "crowds" | "errands" | "quiet" | "productivity" | "alerts";
+type AuthMethod = "google" | "apple" | "phone";
+
+const TOTAL_STEPS = 11;
+
+function Onboarding({ onDone }: { onDone: () => void }) {
+  const [step, setStep] = useState(0);
+  const [, setAuth] = useState<AuthMethod | null>(null);
+  const [goals, setGoals] = useState<Set<GoalKey>>(new Set(["save"]));
+  const [cats, setCats] = useState<Set<string>>(new Set());
+  const [favs, setFavs] = useState<Set<string>>(new Set());
+  const [phone, setPhone] = useState("");
+  const [otpMode, setOtpMode] = useState(false);
+
+  const next = () => setStep(s => Math.min(TOTAL_STEPS - 1, s + 1));
+  const back = () => {
+    if (otpMode) { setOtpMode(false); return; }
+    setStep(s => Math.max(0, s - 1));
+  };
+  const toggle = <T,>(set: Set<T>, setter: (s: Set<T>) => void, v: T, max?: number) => {
+    const n = new Set(set);
+    if (n.has(v)) n.delete(v); else { if (max && n.size >= max) return; n.add(v); }
+    setter(n);
+  };
+
+  const pct = Math.round(((step + 1) / TOTAL_STEPS) * 100);
+  const showTopBar = !(step === 0 && !otpMode);
+
+  return (
+    <div className="absolute inset-0 flex flex-col overflow-hidden" style={{ background: "var(--color-background)" }}>
+      {/* Top bar */}
+      {showTopBar && (
+        <div className="px-5 pt-12 pb-2 flex items-center gap-3 shrink-0">
+          <button onClick={back} className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ background: "var(--color-card)" }}>
+            <CaretLeft size={16} weight="bold" />
+          </button>
+          <div className="flex-1 h-[3px] rounded-full overflow-hidden" style={{ background: "var(--color-border)" }}>
+            <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, background: "var(--color-primary)" }} />
           </div>
-          <h1 className="text-[36px] leading-[1.1] font-bold mb-4">Save time, every day</h1>
-          <p className="text-[17px] leading-relaxed mb-12" style={{ color: "var(--color-muted-foreground)" }}>
-            Know the best time to go before you leave.
-          </p>
-          <div className="flex gap-8 mb-12">
-            <div className="text-center">
-              <div className="text-[28px] font-bold">12k+</div>
-              <div className="text-[13px]" style={{ color: "var(--color-muted-foreground)" }}>users</div>
-            </div>
-            <div className="text-center">
-              <div className="text-[28px] font-bold">3.8h</div>
-              <div className="text-[13px]" style={{ color: "var(--color-muted-foreground)" }}>saved/month</div>
-            </div>
-          </div>
+          <div className="text-[11px] font-semibold tabular-nums w-10 text-right" style={{ color: "var(--color-muted-foreground)" }}>{pct}%</div>
+          {step > 0 && step < TOTAL_STEPS - 1 && !otpMode ? (
+            <button onClick={onDone} className="text-[12px] font-medium" style={{ color: "var(--color-muted-foreground)" }}>Skip</button>
+          ) : <div className="w-7" />}
         </div>
-        <div className="flex flex-col gap-3">
-          <button onClick={onNext} className="w-full h-14 rounded-2xl text-[15px] font-semibold flex items-center justify-center gap-3" style={{ background: "var(--color-primary)", color: "var(--color-primary-foreground)" }}>
-            Continue with Google
-          </button>
-          <button onClick={onNext} className="w-full h-14 rounded-2xl text-[15px] font-semibold flex items-center justify-center gap-3" style={{ background: "var(--color-card)", color: "var(--color-foreground)", border: "1px solid var(--color-border)" }}>
-            Continue with Apple
-          </button>
-          <button onClick={onNext} className="w-full h-14 rounded-2xl text-[15px] font-semibold flex items-center justify-center gap-3" style={{ background: "var(--color-card)", color: "var(--color-foreground)", border: "1px solid var(--color-border)" }}>
-            Continue with Phone
-          </button>
-        </div>
+      )}
+
+      {/* Content (flex; no scroll) */}
+      <div className="flex-1 min-h-0 flex flex-col px-5 pb-5 wl-fade-up overflow-hidden" key={`${step}-${otpMode ? "otp" : "main"}`}>
+        {step === 0 && <Welcome onAuth={(m) => { setAuth(m); if (m === "phone") setOtpMode(true); else next(); }} otpMode={otpMode} phone={phone} setPhone={setPhone} onPhoneDone={() => { setOtpMode(false); next(); }} />}
+        {step === 1 && <HowItWorks onContinue={next} />}
+        {step === 2 && <GoalsStep goals={goals} toggle={(g) => toggle(goals, setGoals, g)} onContinue={next} />}
+        {step === 3 && <LocationStep onAllow={next} onSkip={next} />}
+        {step === 4 && <NotifStep onEnable={next} onSkip={next} />}
+        {step === 5 && <CategoriesStep cats={cats} toggle={(c) => toggle(cats, setCats, c, 5)} onContinue={next} />}
+        {step === 6 && <FavoritesStep favs={favs} toggle={(f) => toggle(favs, setFavs, f)} onContinue={next} />}
+        {step === 7 && <AIPreviewStep onContinue={next} favCount={favs.size} />}
+        {step === 8 && <CommunityStep onContinue={next} />}
+        {step === 9 && <DailyGoalStep onContinue={next} />}
+        {step === 10 && <SuccessStep onDone={onDone} />}
       </div>
-    );
-  }
-
-  // Screen 2: Choose Interests
-  if (step === 1) {
-    const interests = [
-      { id: 'hospital', emoji: '🏥', label: 'Hospital' },
-      { id: 'bank', emoji: '🏦', label: 'Bank' },
-      { id: 'gym', emoji: '💪', label: 'Gym' },
-      { id: 'pharmacy', emoji: '💊', label: 'Pharmacy' },
-      { id: 'cafe', emoji: '☕', label: 'Café' },
-      { id: 'restaurant', emoji: '🍽️', label: 'Restaurant' },
-      { id: 'shopping', emoji: '🛒', label: 'Shopping' },
-      { id: 'petrol', emoji: '⛽', label: 'Petrol' },
-    ];
-    const [selected, setSelected] = useState<string[]>([]);
-
-    const toggleInterest = (id: string) => {
-      if (selected.includes(id)) {
-        setSelected(selected.filter(s => s !== id));
-      } else if (selected.length < 5) {
-        setSelected([...selected, id]);
-      }
-    };
-
-    return (
-      <div className="absolute inset-0 flex flex-col px-6 pt-16 pb-10 wl-fade-up">
-        <div className="flex-1">
-          <h1 className="text-[32px] leading-[1.1] font-bold mb-3">What places matter most?</h1>
-          <p className="text-[17px] mb-8" style={{ color: "var(--color-muted-foreground)" }}>
-            Choose up to 5.
-          </p>
-          <div className="grid grid-cols-2 gap-3">
-            {interests.map(interest => (
-              <button
-                key={interest.id}
-                onClick={() => toggleInterest(interest.id)}
-                className={`p-4 rounded-2xl flex flex-col items-center gap-2 transition-all ${
-                  selected.includes(interest.id)
-                    ? 'wl-shadow-lg'
-                    : 'opacity-60 hover:opacity-100'
-                }`}
-                style={{
-                  background: selected.includes(interest.id) ? 'var(--color-primary)' : 'var(--color-card)',
-                  color: selected.includes(interest.id) ? 'var(--color-primary-foreground)' : 'var(--color-foreground)',
-                  border: selected.includes(interest.id) ? 'none' : '1px solid var(--color-border)',
-                }}
-              >
-                <span className="text-[28px]">{interest.emoji}</span>
-                <span className="text-[14px] font-medium">{interest.label}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-        <button onClick={onNext} className="w-full h-14 rounded-2xl text-[15px] font-semibold" style={{ background: "var(--color-primary)", color: "var(--color-primary-foreground)" }}>
-          Continue
-        </button>
-      </div>
-    );
-  }
-
-  // Screen 3: Location Permission
-  if (step === 2) {
-    return (
-      <div className="absolute inset-0 flex flex-col px-6 pt-16 pb-10 wl-fade-up">
-        <div className="flex-1 flex flex-col items-center justify-center text-center">
-          <div className="w-20 h-20 rounded-full flex items-center justify-center mb-8" style={{ background: "var(--color-primary)/10" }}>
-            <MapPin size={36} weight="duotone" style={{ color: "var(--color-primary)" }} />
-          </div>
-          <h1 className="text-[32px] leading-[1.1] font-bold mb-4">Find the best time nearby</h1>
-          <p className="text-[17px] leading-relaxed mb-12" style={{ color: "var(--color-muted-foreground)" }}>
-            Allow location to discover nearby places and smarter recommendations.
-          </p>
-          <div className="w-full max-w-sm text-left mb-12">
-            <div className="flex items-start gap-3 mb-4">
-              <Check size={20} weight="bold" style={{ color: "var(--color-success)" }} />
-              <span className="text-[15px]" style={{ color: "var(--color-muted-foreground)" }}>Location is never shared publicly</span>
-            </div>
-            <div className="flex items-start gap-3 mb-4">
-              <Check size={20} weight="bold" style={{ color: "var(--color-success)" }} />
-              <span className="text-[15px]" style={{ color: "var(--color-muted-foreground)" }}>Used only for recommendations</span>
-            </div>
-            <div className="flex items-start gap-3">
-              <Check size={20} weight="bold" style={{ color: "var(--color-success)" }} />
-              <span className="text-[15px]" style={{ color: "var(--color-muted-foreground)" }}>Delete your data anytime</span>
-            </div>
-          </div>
-        </div>
-        <div className="flex flex-col gap-3">
-          <button onClick={onDone} className="w-full h-14 rounded-2xl text-[15px] font-semibold" style={{ background: "var(--color-primary)", color: "var(--color-primary-foreground)" }}>
-            Allow Location
-          </button>
-          <button onClick={onDone} className="w-full h-14 rounded-2xl text-[15px] font-semibold" style={{ background: "var(--color-card)", color: "var(--color-foreground)", border: "1px solid var(--color-border)" }}>
-            Not Now
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  return null;
+    </div>
+  );
 }
+
+/* ----- Screen 1: Welcome ----- */
+function Welcome({ onAuth, otpMode, phone, setPhone, onPhoneDone }: {
+  onAuth: (m: AuthMethod) => void; otpMode: boolean; phone: string; setPhone: (s: string) => void; onPhoneDone: () => void;
+}) {
+  const [otp, setOtp] = useState("");
+  const [phoneEntered, setPhoneEntered] = useState(false);
+
+  if (otpMode) {
+    return (
+      <div className="flex flex-col h-full pt-10">
+        <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-5" style={{ background: "var(--color-card)" }}>
+          <Phone size={26} weight="duotone" />
+        </div>
+        <h1 className="text-[26px] leading-[1.1] font-bold mb-2">{phoneEntered ? "Verify your number" : "Enter your number"}</h1>
+        <p className="text-[13px] mb-5" style={{ color: "var(--color-muted-foreground)" }}>
+          {phoneEntered ? `We sent a 6-digit code to ${phone}.` : "We'll text you a 6-digit code to confirm it's you."}
+        </p>
+        {!phoneEntered ? (
+          <>
+            <div className="flex items-center gap-2 h-14 rounded-2xl px-4" style={{ background: "var(--color-card)", border: "1px solid var(--color-border)" }}>
+              <span className="text-[15px] font-semibold" style={{ color: "var(--color-muted-foreground)" }}>+91</span>
+              <input value={phone} onChange={e => setPhone(e.target.value.replace(/\D/g,"").slice(0,10))} placeholder="98765 43210" className="flex-1 bg-transparent text-[16px] font-semibold outline-none" />
+            </div>
+            <button onClick={() => phone.length >= 6 && setPhoneEntered(true)} disabled={phone.length < 6} className="mt-3 w-full h-14 rounded-2xl text-[15px] font-semibold disabled:opacity-40" style={{ background: "var(--color-primary)", color: "var(--color-primary-foreground)" }}>Send code</button>
+          </>
+        ) : (
+          <>
+            <input value={otp} onChange={e => setOtp(e.target.value.replace(/\D/g,"").slice(0,6))} placeholder="• • • • • •" className="w-full h-14 rounded-2xl px-5 text-center text-[22px] tracking-[0.4em] font-semibold outline-none" style={{ background: "var(--color-card)", border: "1px solid var(--color-border)" }} />
+            <button onClick={onPhoneDone} disabled={otp.length < 4} className="mt-3 w-full h-14 rounded-2xl text-[15px] font-semibold disabled:opacity-40" style={{ background: "var(--color-primary)", color: "var(--color-primary-foreground)" }}>Continue your journey</button>
+            <button className="mt-2 text-[12px] mx-auto" style={{ color: "var(--color-muted-foreground)" }}>Resend code</button>
+          </>
+        )}
+        <div className="mt-auto pb-2 flex items-center justify-center gap-1.5 text-[11px]" style={{ color: "var(--color-muted-foreground)" }}>
+          <ShieldCheck size={12} weight="fill" /> Secure authentication
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col h-full pt-10">
+      <div className="flex flex-col items-center text-center">
+        <div className="relative w-[112px] h-[112px] mb-4 flex items-center justify-center">
+          <div className="absolute inset-0 rounded-full" style={{ background: "radial-gradient(closest-side, rgba(59,130,246,0.22), transparent 70%)" }} />
+          <div className="relative w-[84px] h-[84px] rounded-[26px] flex items-center justify-center wl-shadow-lg wl-logo-in" style={{ background: "var(--color-primary)" }}>
+            <Hourglass size={40} weight="duotone" color="#F7F5EF" />
+          </div>
+          <div className="absolute -top-1 -right-1 w-8 h-8 rounded-full flex items-center justify-center wl-shadow-lg" style={{ background: "var(--color-accent)" }}>
+            <Sparkle size={14} weight="fill" color="white" />
+          </div>
+        </div>
+        <h1 className="text-[26px] leading-[1.05] font-bold tracking-tight">Save time, every day</h1>
+        <p className="serif-italic text-[14px] mt-1.5" style={{ color: "var(--color-muted-foreground)" }}>
+          Know the best time to go — before you leave.
+        </p>
+      </div>
+
+      {/* Trust + value proof */}
+      <div className="mt-4 flex items-center justify-center gap-2 text-[11px]" style={{ color: "var(--color-muted-foreground)" }}>
+        <div className="flex items-center gap-1 px-2.5 py-1 rounded-full" style={{ background: "var(--color-card)", border: "1px solid var(--color-border)" }}>
+          <Users size={11} weight="fill" /> 12,000+ users
+        </div>
+        <div className="flex items-center gap-1 px-2.5 py-1 rounded-full" style={{ background: "var(--color-card)", border: "1px solid var(--color-border)" }}>
+          <Lightning size={11} weight="fill" /> 3.8h saved / mo
+        </div>
+      </div>
+
+      {/* Mini AI preview */}
+      <div className="mt-3 wl-card p-3">
+        <div className="text-[10px] font-semibold tracking-[0.18em] uppercase mb-1.5 flex items-center gap-1" style={{ color: "var(--color-accent)" }}>
+          <Sparkle size={10} weight="fill" /> Today you could save
+        </div>
+        {[
+          { p: "HDFC Bank", m: 13 },
+          { p: "Apollo Hospital", m: 22 },
+          { p: "FitZone Gym", m: 8 },
+        ].map(({ p, m }) => (
+          <div key={p} className="flex items-center justify-between py-1">
+            <span className="text-[12px] font-medium">{p}</span>
+            <span className="text-[12px] font-bold" style={{ color: "var(--q-free)" }}>−{m} min</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Auth buttons */}
+      <div className="mt-3 space-y-2">
+        <button onClick={() => onAuth("google")} className="w-full h-12 rounded-2xl flex items-center justify-center gap-2 text-[14px] font-semibold" style={{ background: "var(--color-primary)", color: "var(--color-primary-foreground)" }}>
+          <GoogleG /> Continue with Google
+        </button>
+        <div className="grid grid-cols-2 gap-2">
+          <button onClick={() => onAuth("apple")} className="h-12 rounded-2xl flex items-center justify-center gap-1.5 text-[13px] font-semibold" style={{ background: "var(--color-card)", color: "var(--color-foreground)", border: "1px solid var(--color-border)" }}>
+            <AppleLogo /> Apple
+          </button>
+          <button onClick={() => onAuth("phone")} className="h-12 rounded-2xl flex items-center justify-center gap-1.5 text-[13px] font-semibold" style={{ background: "var(--color-card)", color: "var(--color-foreground)", border: "1px solid var(--color-border)" }}>
+            <Phone size={15} weight="bold" /> Phone
+          </button>
+        </div>
+      </div>
+
+      <div className="mt-auto pt-3 flex items-center justify-center gap-1.5 text-[10px]" style={{ color: "var(--color-muted-foreground)" }}>
+        <ShieldCheck size={11} weight="fill" /> Privacy first · Secure authentication
+      </div>
+    </div>
+  );
+}
+
+function GoogleG() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 48 48" aria-hidden>
+      <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.8 32.6 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.8 1.1 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.2-.1-2.3-.4-3.5z"/>
+      <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 16 18.9 13 24 13c3 0 5.8 1.1 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/>
+      <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35 26.7 36 24 36c-5.3 0-9.8-3.4-11.4-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/>
+      <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.2-4.2 5.6l6.2 5.2C40.9 36 44 30.5 44 24c0-1.2-.1-2.3-.4-3.5z"/>
+    </svg>
+  );
+}
+function AppleLogo() {
+  return (
+    <svg width="14" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+      <path d="M16.4 12.6c0-2.6 2.1-3.8 2.2-3.9-1.2-1.7-3-2-3.7-2-1.6-.2-3.1.9-3.9.9-.8 0-2-.9-3.4-.9-1.7 0-3.4 1-4.3 2.6-1.8 3.1-.5 7.7 1.3 10.2.9 1.2 2 2.6 3.3 2.5 1.3-.1 1.8-.8 3.4-.8s2 .8 3.4.8c1.4 0 2.3-1.2 3.2-2.5.7-.9 1.3-1.9 1.7-3-3-1.1-3.2-4.7-3.2-4.9zM13.8 4.3c.7-.9 1.2-2.1 1.1-3.3-1 0-2.3.7-3 1.5-.6.8-1.2 2-1 3.2 1.1.1 2.2-.6 2.9-1.4z"/>
+    </svg>
+  );
+}
+
+function StepHeader({ tag, title, body }: { tag: string; title: string; body: string }) {
+  return (
+    <div className="pt-1 pb-4">
+      <div className="text-[10px] font-semibold tracking-[0.2em] uppercase mb-1.5" style={{ color: "var(--color-accent)" }}>{tag}</div>
+      <h1 className="text-[24px] leading-[1.1] font-bold tracking-tight">{title}</h1>
+      <p className="text-[13px] mt-1.5" style={{ color: "var(--color-muted-foreground)" }}>{body}</p>
+    </div>
+  );
+}
+
+function PrimaryCTA({ label, onClick, icon }: { label: string; onClick: () => void; icon?: React.ReactNode }) {
+  return (
+    <button onClick={onClick} className="w-full h-14 rounded-2xl text-[15px] font-semibold inline-flex items-center justify-center gap-2" style={{ background: "var(--color-primary)", color: "var(--color-primary-foreground)" }}>
+      {label} {icon}
+    </button>
+  );
+}
+
+/* ----- Screen 2: How it works ----- */
+function HowItWorks({ onContinue }: { onContinue: () => void }) {
+  const cards = [
+    { tag: "Current wait", v: "52", u: "min", c: "var(--q-busy)", bg: "var(--q-busy-bg)" },
+    { tag: "Best time", v: "7:15", u: "PM", c: "var(--color-accent)", bg: "rgba(245,158,11,0.12)" },
+    { tag: "Expected wait", v: "4", u: "min", c: "var(--q-free)", bg: "var(--q-free-bg)" },
+  ];
+  const steps = [
+    { i: Brain, t: "We predict wait times", d: "AI analyzes patterns in real time" },
+    { i: Target, t: "We find the best time", d: "Personalized to your day" },
+    { i: Lightning, t: "You save time", d: "Hours back every month" },
+  ];
+  return (
+    <div className="flex flex-col h-full">
+      <StepHeader tag="How it works" title="From busy to brilliant" body="Three steps turn waiting into time reclaimed." />
+      <div className="grid grid-cols-3 gap-2">
+        {cards.map(c => (
+          <div key={c.tag} className="rounded-2xl p-2.5 text-center wl-card">
+            <div className="text-[9px] font-semibold tracking-[0.1em] uppercase" style={{ color: "var(--color-muted-foreground)" }}>{c.tag}</div>
+            <div className="mt-1.5 rounded-xl py-2" style={{ background: c.bg }}>
+              <div className="text-[20px] font-extrabold leading-none" style={{ color: c.c }}>{c.v}</div>
+              <div className="text-[10px] font-semibold mt-0.5" style={{ color: c.c }}>{c.u}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="mt-4 space-y-2">
+        {steps.map(({ i: Ic, t, d }, idx) => (
+          <div key={t} className="flex items-center gap-3 p-3 rounded-2xl wl-card">
+            <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-[12px] font-bold" style={{ background: "var(--color-primary)", color: "var(--color-primary-foreground)" }}>{idx + 1}</div>
+            <div className="flex-1 min-w-0">
+              <div className="text-[14px] font-semibold leading-tight">{t}</div>
+              <div className="text-[11px]" style={{ color: "var(--color-muted-foreground)" }}>{d}</div>
+            </div>
+            <Ic size={18} weight="duotone" style={{ color: "var(--color-accent)" }} />
+          </div>
+        ))}
+      </div>
+      <div className="mt-3 text-center text-[11px]" style={{ color: "var(--color-muted-foreground)" }}>
+        Average user saves <span className="font-bold" style={{ color: "var(--color-foreground)" }}>2–5 hours</span> every month.
+      </div>
+      <div className="mt-auto pt-3">
+        <PrimaryCTA label="Continue" onClick={onContinue} icon={<CaretRight size={15} weight="bold" />} />
+      </div>
+    </div>
+  );
+}
+
+/* ----- Screen 3: Goals ----- */
+function GoalsStep({ goals, toggle, onContinue }: { goals: Set<GoalKey>; toggle: (g: GoalKey) => void; onContinue: () => void }) {
+  const opts: { k: GoalKey; t: string; i: React.ComponentType<any>; msg: string }[] = [
+    { k: "save", t: "Save Time", i: Lightning, msg: "We'll prioritize recommendations that maximize time saved." },
+    { k: "crowds", t: "Avoid Crowds", i: Users, msg: "We'll surface the quietest moments to visit." },
+    { k: "errands", t: "Plan Errands", i: Path, msg: "We'll order your stops the smart way." },
+    { k: "quiet", t: "Discover Quiet Places", i: Sparkle, msg: "We'll spotlight calmer spots nearby." },
+    { k: "productivity", t: "Daily Productivity", i: Target, msg: "We'll help you fit more into less time." },
+    { k: "alerts", t: "Smart Alerts", i: Bell, msg: "We'll ping you the moment it's the right time." },
+  ];
+  const primary = opts.find(o => goals.has(o.k));
+  return (
+    <div className="flex flex-col h-full">
+      <StepHeader tag="Personalize" title="What matters to you?" body="Pick any — your AI tunes to your goals." />
+      <div className="grid grid-cols-2 gap-2">
+        {opts.map(({ k, t, i: Ic }) => {
+          const on = goals.has(k);
+          return (
+            <button key={k} onClick={() => toggle(k)} className="relative flex flex-col items-start gap-1.5 p-3 rounded-2xl text-left transition-all" style={{ background: "var(--color-card)", border: `1.5px solid ${on ? "var(--color-primary)" : "var(--color-border)"}` }}>
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: on ? "var(--color-primary)" : "var(--color-muted)", color: on ? "var(--color-primary-foreground)" : "var(--color-foreground)" }}>
+                <Ic size={15} weight="duotone" />
+              </div>
+              <div className="text-[13px] font-semibold leading-tight">{t}</div>
+              {on && <div className="absolute top-2 right-2 w-4 h-4 rounded-full flex items-center justify-center" style={{ background: "var(--color-primary)" }}><Check size={9} weight="bold" color="var(--color-primary-foreground)" /></div>}
+            </button>
+          );
+        })}
+      </div>
+      <div className="mt-3 flex items-start gap-2 px-3 py-2.5 rounded-xl" style={{ background: "var(--color-muted)" }}>
+        <Brain size={15} weight="duotone" className="mt-0.5 shrink-0" />
+        <span className="text-[11px] leading-snug" style={{ color: "var(--color-muted-foreground)" }}>
+          {primary ? primary.msg : "Pick at least one to personalize your assistant."}
+        </span>
+      </div>
+      <div className="mt-auto pt-3">
+        <PrimaryCTA label="Continue" onClick={onContinue} icon={<CaretRight size={15} weight="bold" />} />
+      </div>
+    </div>
+  );
+}
+
+/* ----- Screen 4: Location ----- */
+function LocationStep({ onAllow, onSkip }: { onAllow: () => void; onSkip: () => void }) {
+  const privacy = [
+    "Location never shared publicly",
+    "Used only for recommendations",
+    "Used for nearby places",
+    "Used for smart route planning",
+    "Delete your data anytime",
+  ];
+  return (
+    <div className="flex flex-col h-full">
+      <div className="flex flex-col items-center text-center pt-2 pb-3">
+        <div className="relative w-20 h-20 mb-3 flex items-center justify-center">
+          <div className="absolute inset-0 rounded-full" style={{ background: "radial-gradient(closest-side, rgba(59,130,246,0.22), transparent 70%)" }} />
+          <div className="relative w-16 h-16 rounded-[22px] flex items-center justify-center wl-shadow-lg" style={{ background: "var(--color-card)" }}>
+            <NavigationArrow size={28} weight="duotone" color="var(--color-accent)" />
+          </div>
+        </div>
+        <h1 className="text-[22px] leading-[1.1] font-bold tracking-tight">Enable smart recommendations</h1>
+        <p className="text-[12px] mt-1.5 max-w-[300px]" style={{ color: "var(--color-muted-foreground)" }}>
+          Used to find nearby places and predict the best time to visit.
+        </p>
+      </div>
+      <div className="wl-card p-3.5">
+        <div className="flex items-center gap-2 mb-2">
+          <ShieldCheck size={14} weight="fill" style={{ color: "var(--q-free)" }} />
+          <div className="text-[12px] font-bold">Privacy First</div>
+          <div className="ml-auto text-[9px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "var(--q-free-bg)", color: "var(--q-free-text)" }}>Encrypted</div>
+        </div>
+        {privacy.map(t => (
+          <div key={t} className="flex items-center gap-2 py-1">
+            <Check size={12} weight="bold" style={{ color: "var(--q-free)" }} />
+            <span className="text-[12px]" style={{ color: "var(--color-muted-foreground)" }}>{t}</span>
+          </div>
+        ))}
+      </div>
+      <div className="mt-auto pt-3">
+        <PrimaryCTA label="Allow location" onClick={onAllow} />
+        <button onClick={onSkip} className="w-full h-11 mt-1 rounded-2xl text-[13px] font-medium" style={{ color: "var(--color-muted-foreground)" }}>Not now</button>
+      </div>
+    </div>
+  );
+}
+
+/* ----- Screen 5: Notifications ----- */
+function NotifStep({ onEnable, onSkip }: { onEnable: () => void; onSkip: () => void }) {
+  const examples = [
+    { p: "Apollo Hospital", t: "Wait dropped to 8 min", c: "var(--q-free)", bg: "var(--q-free-bg)" },
+    { p: "FitZone Gym", t: "Quiet right now", c: "var(--q-free)", bg: "var(--q-free-bg)" },
+    { p: "HDFC Bank", t: "Best time starts in 15 min", c: "var(--color-accent)", bg: "rgba(245,158,11,0.12)" },
+  ];
+  return (
+    <div className="flex flex-col h-full">
+      <div className="flex flex-col items-center text-center pt-2 pb-3">
+        <div className="relative w-20 h-20 mb-3 flex items-center justify-center">
+          <div className="absolute inset-0 rounded-full" style={{ background: "radial-gradient(closest-side, rgba(245,158,11,0.22), transparent 70%)" }} />
+          <div className="relative w-16 h-16 rounded-[22px] flex items-center justify-center wl-shadow-lg" style={{ background: "var(--color-card)" }}>
+            <Bell size={28} weight="duotone" color="var(--color-accent)" />
+          </div>
+        </div>
+        <h1 className="text-[22px] leading-[1.1] font-bold tracking-tight">Stay ahead of the crowd</h1>
+        <p className="text-[12px] mt-1.5" style={{ color: "var(--color-muted-foreground)" }}>
+          Never miss the best moment to go.
+        </p>
+      </div>
+      <div className="space-y-2">
+        {examples.map((e, i) => (
+          <div key={i} className="flex items-center gap-3 p-3 rounded-2xl wl-card">
+            <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ background: e.bg }}>
+              <Bell size={14} weight="fill" style={{ color: e.c }} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-[13px] font-semibold truncate">{e.p}</div>
+              <div className="text-[11px]" style={{ color: "var(--color-muted-foreground)" }}>{e.t}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="mt-auto pt-3">
+        <PrimaryCTA label="Enable notifications" onClick={onEnable} />
+        <button onClick={onSkip} className="w-full h-11 mt-1 rounded-2xl text-[13px] font-medium" style={{ color: "var(--color-muted-foreground)" }}>Maybe later</button>
+      </div>
+    </div>
+  );
+}
+
+/* ----- Screen 6: Categories ----- */
+function CategoriesStep({ cats, toggle, onContinue }: { cats: Set<string>; toggle: (c: string) => void; onContinue: () => void }) {
+  const recommended = new Set(["Hospital", "Bank", "Gym"]);
+  const items = [
+    { k: "Hospital", e: "🏥" }, { k: "Bank", e: "🏦" }, { k: "Gym", e: "💪" }, { k: "Café", e: "☕" },
+    { k: "Pharmacy", e: "💊" }, { k: "Restaurant", e: "🍽️" }, { k: "Govt", e: "🏛️" }, { k: "Shopping", e: "🛍️" },
+    { k: "University", e: "🎓" }, { k: "Petrol", e: "⛽" },
+  ];
+  return (
+    <div className="flex flex-col h-full min-h-0">
+      <div className="pt-1 pb-2 shrink-0">
+        <div className="text-[10px] font-semibold tracking-[0.2em] uppercase mb-1" style={{ color: "var(--color-accent)" }}>Your places</div>
+        <div className="flex items-baseline justify-between">
+          <h1 className="text-[22px] leading-[1.1] font-bold tracking-tight">What matters most?</h1>
+          <span className="text-[11px] font-semibold tabular-nums" style={{ color: "var(--color-muted-foreground)" }}>{cats.size}/5</span>
+        </div>
+        <p className="text-[11.5px] mt-1" style={{ color: "var(--color-muted-foreground)" }}>Choose up to 5 — recommended highlighted.</p>
+      </div>
+      <div className="flex-1 min-h-0 overflow-y-auto -mx-5 px-5">
+        <div className="grid grid-cols-3 gap-2">
+          {items.map(({ k, e }) => {
+            const on = cats.has(k);
+            const rec = recommended.has(k);
+            return (
+              <button key={k} onClick={() => toggle(k)} className="relative h-[78px] rounded-2xl flex flex-col items-center justify-center gap-0.5 transition-all" style={{ background: "var(--color-card)", border: `1.5px solid ${on ? "var(--color-primary)" : rec ? "color-mix(in oklab, var(--color-accent) 50%, transparent)" : "var(--color-border)"}` }}>
+                <div className="text-[20px] leading-none">{e}</div>
+                <div className="text-[10.5px] font-semibold">{k}</div>
+                {rec && !on && <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 px-1.5 py-[1px] rounded-full text-[8px] font-bold uppercase tracking-wider" style={{ background: "var(--color-accent)", color: "white" }}>Top</div>}
+                {on && <div className="absolute top-1.5 right-1.5 w-3.5 h-3.5 rounded-full flex items-center justify-center" style={{ background: "var(--color-primary)" }}>
+                  <Check size={8} weight="bold" color="var(--color-primary-foreground)" />
+                </div>}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+      <div className="shrink-0 pt-2">
+        <div className="mb-2 flex items-start gap-2 px-3 py-2 rounded-xl" style={{ background: "var(--color-muted)" }}>
+          <Brain size={13} weight="duotone" className="mt-0.5 shrink-0" />
+          <span className="text-[11px]" style={{ color: "var(--color-muted-foreground)" }}>{cats.size > 0 ? `Prioritizing ${cats.size} ${cats.size === 1 ? "category" : "categories"} in your feed.` : "We'll prioritize these in your recommendations."}</span>
+        </div>
+        <PrimaryCTA label="Continue" onClick={onContinue} icon={<CaretRight size={15} weight="bold" />} />
+      </div>
+    </div>
+  );
+}
+
+/* ----- Screen 9 (new): Community ----- */
+function CommunityStep({ onContinue }: { onContinue: () => void }) {
+  const stats = [
+    { v: "94%", l: "Accuracy" },
+    { v: "12k+", l: "Active users" },
+    { v: "87k+", l: "Reports" },
+  ];
+  return (
+    <div className="flex flex-col h-full">
+      <div className="flex flex-col items-center text-center pt-2 pb-3">
+        <div className="relative w-20 h-20 mb-3 flex items-center justify-center">
+          <div className="absolute inset-0 rounded-full" style={{ background: "radial-gradient(closest-side, rgba(59,130,246,0.22), transparent 70%)" }} />
+          <div className="relative w-16 h-16 rounded-[22px] flex items-center justify-center wl-shadow-lg" style={{ background: "var(--color-card)" }}>
+            <Users size={28} weight="duotone" color="var(--color-accent)" />
+          </div>
+        </div>
+        <h1 className="text-[22px] leading-[1.1] font-bold tracking-tight">Help thousands save time</h1>
+        <p className="text-[12px] mt-1.5 max-w-[300px]" style={{ color: "var(--color-muted-foreground)" }}>One tap helps improve recommendations for everyone.</p>
+      </div>
+      <div className="grid grid-cols-3 gap-2 mb-3">
+        {stats.map(s => (
+          <div key={s.l} className="wl-card p-3 text-center">
+            <div className="text-[18px] font-extrabold leading-none" style={{ color: "var(--color-accent)" }}>{s.v}</div>
+            <div className="text-[9px] uppercase tracking-wider mt-1.5" style={{ color: "var(--color-muted-foreground)" }}>{s.l}</div>
+          </div>
+        ))}
+      </div>
+      <div className="wl-card p-3.5">
+        <div className="text-[11px] font-bold mb-1.5">When you confirm wait times</div>
+        {["Predictions improve", "Community benefits", "Local accuracy increases"].map(t => (
+          <div key={t} className="flex items-center gap-2 py-1">
+            <Check size={12} weight="bold" style={{ color: "var(--q-free)" }} />
+            <span className="text-[12px]" style={{ color: "var(--color-muted-foreground)" }}>{t}</span>
+          </div>
+        ))}
+      </div>
+      <div className="mt-auto pt-3">
+        <PrimaryCTA label="Join the community" onClick={onContinue} icon={<CaretRight size={15} weight="bold" />} />
+      </div>
+    </div>
+  );
+}
+
+/* ----- Screen 10 (new): Daily Goal ----- */
+function DailyGoalStep({ onContinue }: { onContinue: () => void }) {
+  const [goal, setGoal] = useState(30);
+  const opts = [15, 30, 60];
+  return (
+    <div className="flex flex-col h-full">
+      <div className="flex flex-col items-center text-center pt-2 pb-3">
+        <div className="relative w-20 h-20 mb-3 flex items-center justify-center">
+          <div className="absolute inset-0 rounded-full" style={{ background: "radial-gradient(closest-side, rgba(245,158,11,0.22), transparent 70%)" }} />
+          <div className="relative w-16 h-16 rounded-[22px] flex items-center justify-center wl-shadow-lg" style={{ background: "var(--color-card)" }}>
+            <Target size={28} weight="duotone" color="var(--color-accent)" />
+          </div>
+        </div>
+        <h1 className="text-[22px] leading-[1.1] font-bold tracking-tight">Choose your daily goal</h1>
+        <p className="text-[12px] mt-1.5" style={{ color: "var(--color-muted-foreground)" }}>How many minutes do you want to reclaim each day?</p>
+      </div>
+      <div className="space-y-2">
+        {opts.map(o => {
+          const on = goal === o;
+          const rec = o === 30;
+          return (
+            <button key={o} onClick={() => setGoal(o)} className="relative w-full flex items-center gap-3 p-3.5 rounded-2xl text-left" style={{ background: "var(--color-card)", border: `1.5px solid ${on ? "var(--color-primary)" : "var(--color-border)"}` }}>
+              <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0" style={{ background: on ? "var(--color-primary)" : "var(--color-muted)", color: on ? "var(--color-primary-foreground)" : "var(--color-foreground)" }}>
+                <Clock size={18} weight="duotone" />
+              </div>
+              <div className="flex-1">
+                <div className="text-[15px] font-bold leading-tight">{o} min saved / day</div>
+                <div className="text-[11px] mt-0.5" style={{ color: "var(--color-muted-foreground)" }}>≈ {Math.round(o * 30 / 60 * 10) / 10}h every month</div>
+              </div>
+              {rec && <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-1 rounded-full" style={{ background: "var(--color-accent)", color: "white" }}>Top pick</span>}
+            </button>
+          );
+        })}
+      </div>
+      <div className="mt-3 flex items-start gap-2 px-3 py-2.5 rounded-xl" style={{ background: "var(--color-muted)" }}>
+        <Brain size={14} weight="duotone" className="mt-0.5 shrink-0" />
+        <span className="text-[11px]" style={{ color: "var(--color-muted-foreground)" }}>Most users reclaim <span className="font-bold" style={{ color: "var(--color-foreground)" }}>3–5 hours</span> every month.</span>
+      </div>
+      <div className="mt-auto pt-3">
+        <PrimaryCTA label={`Set ${goal} min daily goal`} onClick={onContinue} icon={<CaretRight size={15} weight="bold" />} />
+      </div>
+    </div>
+  );
+}
+
+/* ----- Screen 7: Favorite places ----- */
+function FavoritesStep({ favs, toggle, onContinue }: { favs: Set<string>; toggle: (f: string) => void; onContinue: () => void }) {
+  const recommended = [
+    { n: "Apollo Hospital", d: "1.2 km", w: 24, b: "7:15 PM" },
+    { n: "HDFC Bank", d: "0.6 km", w: 12, b: "2:15 PM" },
+    { n: "FitZone Gym", d: "0.9 km", w: 3, b: "Now" },
+    { n: "MedPlus Pharmacy", d: "0.3 km", w: 4, b: "Now" },
+  ];
+  return (
+    <div className="flex flex-col h-full">
+      <div className="pt-1 pb-3">
+        <div className="text-[10px] font-semibold tracking-[0.2em] uppercase mb-1.5" style={{ color: "var(--color-accent)" }}>Recommended near you</div>
+        <h1 className="text-[24px] leading-[1.1] font-bold tracking-tight">Save places you visit</h1>
+        <p className="text-[12px] mt-1" style={{ color: "var(--color-muted-foreground)" }}>Faster alerts, smarter planning.</p>
+      </div>
+      <div className="space-y-2">
+        {recommended.map(p => {
+          const on = favs.has(p.n);
+          const wc = waitColor(p.w);
+          return (
+            <div key={p.n} className="flex items-center gap-3 p-3 rounded-2xl" style={{ background: "var(--color-card)", border: `1.5px solid ${on ? "var(--color-primary)" : "var(--color-border)"}` }}>
+              <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ background: "var(--color-muted)" }}>
+                <MapPin size={14} weight="duotone" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-[13px] font-semibold truncate">{p.n}</div>
+                <div className="text-[10.5px] flex items-center gap-2" style={{ color: "var(--color-muted-foreground)" }}>
+                  <span>{p.d}</span>
+                  <span>·</span>
+                  <span style={{ color: wc.text }} className="font-semibold">{p.w}m now</span>
+                  <span>·</span>
+                  <span className="font-semibold" style={{ color: "var(--color-accent)" }}>Best {p.b}</span>
+                </div>
+              </div>
+              <button onClick={() => toggle(p.n)} className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ background: on ? "var(--color-primary)" : "transparent", border: on ? "none" : "1.5px solid var(--color-border)", color: on ? "var(--color-primary-foreground)" : "var(--color-muted-foreground)" }}>
+                {on ? <Heart size={14} weight="fill" /> : <Plus size={14} weight="bold" />}
+              </button>
+            </div>
+          );
+        })}
+      </div>
+      <div className="mt-auto pt-3">
+        <PrimaryCTA label={favs.size > 0 ? `Continue with ${favs.size} saved` : "Continue"} onClick={onContinue} icon={<CaretRight size={15} weight="bold" />} />
+      </div>
+    </div>
+  );
+}
+
+/* ----- Screen 8: AI Preview ----- */
+function AIPreviewStep({ onContinue, favCount }: { onContinue: () => void; favCount: number }) {
+  const checks = [
+    `${Math.max(favCount, 8)} nearby places tracked`,
+    "Smart alerts enabled",
+    "AI planner activated",
+    "Recommendations personalized",
+  ];
+  const ops = [
+    { p: "Apollo Hospital", s: 18 },
+    { p: "HDFC Bank", s: 9 },
+    { p: "FitZone Gym", s: 14 },
+  ];
+  return (
+    <div className="flex flex-col h-full">
+      <div className="flex flex-col items-center text-center pt-2 pb-3">
+        <div className="relative w-20 h-20 mb-3 flex items-center justify-center">
+          <div className="absolute inset-0 rounded-full wl-pulse-ring" style={{ color: "var(--color-accent)" }} />
+          <div className="relative w-16 h-16 rounded-[22px] flex items-center justify-center wl-shadow-lg" style={{ background: "var(--color-primary)" }}>
+            <Brain size={28} weight="duotone" color="#F7F5EF" />
+          </div>
+        </div>
+        <h1 className="text-[22px] leading-[1.1] font-bold tracking-tight">Your AI assistant is ready</h1>
+        <p className="serif-italic text-[13px] mt-1" style={{ color: "var(--color-muted-foreground)" }}>Based on your setup</p>
+      </div>
+      <div className="wl-card p-3 grid grid-cols-2 gap-1.5">
+        {checks.map(t => (
+          <div key={t} className="flex items-center gap-1.5">
+            <Check size={12} weight="bold" style={{ color: "var(--q-free)" }} />
+            <span className="text-[11px]" style={{ color: "var(--color-muted-foreground)" }}>{t}</span>
+          </div>
+        ))}
+      </div>
+      <div className="mt-3">
+        <div className="text-[10px] font-semibold tracking-[0.18em] uppercase mb-1.5 flex items-center gap-1" style={{ color: "var(--color-accent)" }}>
+          <Sparkle size={10} weight="fill" /> Today's opportunities
+        </div>
+        <div className="space-y-1.5">
+          {ops.map(o => (
+            <div key={o.p} className="flex items-center justify-between px-3 py-2.5 rounded-xl wl-card">
+              <span className="text-[13px] font-semibold">{o.p}</span>
+              <span className="text-[12px] font-bold" style={{ color: "var(--q-free)" }}>Save {o.s} min</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="mt-3 rounded-2xl p-3 text-center" style={{ background: "var(--color-primary)", color: "var(--color-primary-foreground)" }}>
+        <div className="text-[10px] font-semibold tracking-[0.18em] uppercase opacity-70">Estimated monthly savings</div>
+        <div className="text-[24px] font-extrabold mt-0.5 leading-none">3–5 hours</div>
+      </div>
+      <div className="mt-auto pt-3">
+        <PrimaryCTA label="Continue" onClick={onContinue} icon={<CaretRight size={15} weight="bold" />} />
+      </div>
+    </div>
+  );
+}
+
+/* ----- Screen 9: Success ----- */
+function SuccessStep({ onDone }: { onDone: () => void }) {
+  const ready = [
+    { i: Brain, t: "AI Planner Ready" },
+    { i: Bell, t: "Smart Alerts Active" },
+    { i: MapPinLine, t: "Nearby Recommendations" },
+    { i: Users, t: "Community Insights" },
+  ];
+  return (
+    <div className="flex flex-col h-full">
+      <div className="flex flex-col items-center text-center pt-2 pb-3">
+        <div className="relative w-20 h-20 mb-3 flex items-center justify-center">
+          <div className="absolute inset-0 rounded-full wl-pulse-ring" style={{ color: "var(--q-free)" }} />
+          <div className="relative w-16 h-16 rounded-[22px] flex items-center justify-center wl-shadow-lg" style={{ background: "var(--q-free)" }}>
+            <Check size={32} weight="bold" color="#F7F5EF" />
+          </div>
+        </div>
+        <h1 className="text-[26px] leading-[1.05] font-bold tracking-tight">You're ready</h1>
+        <p className="serif-italic text-[14px] mt-1.5" style={{ color: "var(--color-muted-foreground)" }}>
+          Your time starts coming back today.
+        </p>
+      </div>
+
+      <div className="rounded-2xl p-4 text-center" style={{ background: "linear-gradient(135deg, var(--color-primary), color-mix(in oklab, var(--color-primary) 70%, var(--color-accent)))", color: "var(--color-primary-foreground)" }}>
+        <div className="text-[10px] font-semibold tracking-[0.18em] uppercase opacity-75 flex items-center justify-center gap-1">
+          <Lightning size={11} weight="fill" /> Potential monthly savings
+        </div>
+        <div className="text-[44px] font-extrabold mt-1 leading-none tracking-tight">4h 12m</div>
+        <div className="text-[11px] mt-1 opacity-75">Time reclaimed for you</div>
+      </div>
+
+      <div className="mt-3 grid grid-cols-2 gap-1.5">
+        {[
+          { e: "💪", t: "5 gym sessions" },
+          { e: "🎬", t: "2 movie nights" },
+          { e: "🌿", t: "1 weekend outing" },
+          { e: "❤️", t: "Family time" },
+        ].map(x => (
+          <div key={x.t} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl" style={{ background: "var(--color-muted)" }}>
+            <span className="text-[14px]">{x.e}</span>
+            <span className="text-[11px] font-medium leading-tight">{x.t}</span>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-3 wl-card p-3 grid grid-cols-2 gap-2">
+        {ready.map(({ i: Ic, t }) => (
+          <div key={t} className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0" style={{ background: "var(--q-free-bg)" }}>
+              <Ic size={13} weight="duotone" style={{ color: "var(--q-free)" }} />
+            </div>
+            <span className="text-[11.5px] font-medium leading-tight">{t}</span>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-auto pt-3">
+        <PrimaryCTA label="Start saving time" onClick={onDone} icon={<CaretRight size={15} weight="bold" />} />
+        <div className="mt-2 flex items-center justify-center gap-1.5 text-[10px]" style={{ color: "var(--color-muted-foreground)" }}>
+          <ShieldCheck size={11} weight="fill" /> Privacy first · Community verified · Delete data anytime
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ----- Post-onboarding loading transition ----- */
+function LoadingScreen({ onDone }: { onDone: () => void }) {
+  const lines = [
+    "Scanning hospitals nearby",
+    "Indexing banks & ATMs",
+    "Mapping cafés and gyms",
+    "Loading government offices",
+    "Building your AI dashboard",
+  ];
+  const [i, setI] = useState(0);
+  useEffect(() => {
+    const ticks = lines.map((_, idx) => setTimeout(() => setI(idx + 1), 280 * (idx + 1)));
+    const done = setTimeout(onDone, 2000);
+    return () => { ticks.forEach(clearTimeout); clearTimeout(done); };
+  }, []);
+  return (
+    <div className="absolute inset-0 flex flex-col items-center justify-center px-8" style={{ background: "var(--color-background)" }}>
+      <div className="relative w-24 h-24 mb-6 flex items-center justify-center">
+        <div className="absolute inset-0 rounded-full wl-pulse-ring" style={{ color: "var(--color-accent)" }} />
+        <div className="absolute inset-2 rounded-full wl-pulse-ring" style={{ color: "var(--color-primary)", animationDelay: "300ms" }} />
+        <div className="relative w-16 h-16 rounded-[22px] flex items-center justify-center wl-shadow-lg" style={{ background: "var(--color-primary)" }}>
+          <Brain size={28} weight="duotone" color="#F7F5EF" />
+        </div>
+      </div>
+      <div className="text-[20px] font-bold tracking-tight text-center">Analyzing your area…</div>
+      <p className="serif-italic text-[13px] mt-1.5 text-center" style={{ color: "var(--color-muted-foreground)" }}>Generating personalized recommendations.</p>
+      <div className="mt-6 w-full max-w-[280px] space-y-1.5">
+        {lines.map((l, idx) => {
+          const done = idx < i;
+          const active = idx === i;
+          return (
+            <div key={l} className="flex items-center gap-2 text-[12px] transition-opacity" style={{ opacity: done || active ? 1 : 0.35 }}>
+              {done ? (
+                <Check size={13} weight="bold" style={{ color: "var(--q-free)" }} />
+              ) : (
+                <div className="w-[13px] h-[13px] rounded-full border-2" style={{ borderColor: active ? "var(--color-accent)" : "var(--color-border)", borderTopColor: active ? "transparent" : undefined, animation: active ? "wl-spin 0.8s linear infinite" : undefined }} />
+              )}
+              <span style={{ color: done ? "var(--color-foreground)" : "var(--color-muted-foreground)" }}>{l}</span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+
+
+
 
 /* =========================== TODAY (was HOME) =========================== */
 function TodayScreen({ places, saved, toggleSave, openDetail, showToast, openPlanner }: {
@@ -411,44 +965,61 @@ function TodayScreen({ places, saved, toggleSave, openDetail, showToast, openPla
   const greet = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
 
   return (
-    <div className="px-5 pt-12">
-      {/* Header */}
-      <div className="flex items-start justify-between mb-6">
-        <div>
-          <div className="text-[13px]" style={{ color: "var(--color-muted-foreground)" }}>{greet}, Ravi</div>
-          <div className="text-[26px] font-bold leading-tight">Here's your day</div>
-          <button onClick={refresh} className="mt-1 inline-flex items-center gap-1.5 text-[11px]" style={{ color: "var(--color-muted-foreground)" }}>
-            <ArrowsClockwise size={12} weight="bold" className={refreshing ? "wl-spin" : ""} /> Updated {refreshing ? "…" : updated}
+    <div>
+      {/* Sticky top header — Apple-style frosted */}
+      <div className="sticky top-0 z-30 px-5 pt-12 pb-3" style={{ background: "color-mix(in oklab, var(--color-background) 78%, transparent)", backdropFilter: "saturate(180%) blur(20px)", borderBottom: "1px solid color-mix(in oklab, var(--color-border) 60%, transparent)" }}>
+        <div className="flex items-start justify-between">
+          <div>
+            <div className="text-[13px]" style={{ color: "var(--color-muted-foreground)" }}>{greet}, Ravi</div>
+            <div className="text-[26px] font-bold leading-tight">Here's your day</div>
+            <button onClick={refresh} className="mt-1 inline-flex items-center gap-1.5 text-[11px]" style={{ color: "var(--color-muted-foreground)" }}>
+              <ArrowsClockwise size={12} weight="bold" className={refreshing ? "wl-spin" : ""} /> Updated {refreshing ? "…" : updated}
+            </button>
+          </div>
+          <button onClick={() => showToast("Hyderabad")} className="flex items-center gap-1.5 px-3 py-2 rounded-full text-[12px] font-medium wl-card">
+            <MapPin size={14} weight="fill" /> Hyderabad
           </button>
         </div>
-        <button onClick={() => showToast("Hyderabad")} className="flex items-center gap-1.5 px-3 py-2 rounded-full text-[12px] font-medium wl-card">
-          <MapPin size={14} weight="fill" /> Hyderabad
-        </button>
       </div>
 
-      {/* Value-first hero: Today you could save */}
-      <div className="wl-card p-5 mb-4 wl-fade-up">
-        <div className="flex items-center gap-1.5 text-[11px] font-semibold tracking-[0.18em] uppercase mb-4" style={{ color: "var(--color-muted-foreground)" }}>
-          <Lightning size={12} weight="fill" /> Today you could save
-        </div>
-        <div className="space-y-3">
-          {opportunities.map((place, idx) => (
-            <div key={place.id} className="flex items-center justify-between p-3 rounded-xl" style={{ background: "var(--color-background)" }}>
-              <div className="flex items-center gap-3">
-                <span className="text-[24px]">{place.emoji}</span>
-                <div>
-                  <div className="text-[15px] font-semibold">{place.name}</div>
-                  <div className="text-[12px]" style={{ color: "var(--color-muted-foreground)" }}>{place.distance}</div>
+      <div className="px-5 pt-4">
+
+
+      {/* Minutes Saved hero with Daily Goal */}
+      {(() => {
+        const goal = 60;
+        const pct = Math.min(100, Math.round((minutesSavedToday / goal) * 100));
+        const remaining = Math.max(0, goal - minutesSavedToday);
+        const r = 26, circ = 2 * Math.PI * r;
+        const off = circ - (pct / 100) * circ;
+        return (
+          <div className="wl-card p-5 mb-4 wl-fade-up" style={{ background: "var(--color-primary)", color: "var(--color-primary-foreground)" }}>
+            <div className="flex items-center justify-between">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5 text-[10px] font-semibold tracking-[0.18em] uppercase opacity-70 mb-2">
+                  <Lightning size={12} weight="fill" /> Minutes saved today
+                </div>
+                <div className="text-[48px] leading-none font-extrabold">{minutesSavedToday}<span className="text-[16px] font-semibold ml-1.5 opacity-70">min</span></div>
+                <div className="text-[11px] opacity-70 mt-2">Reclaimed today · ≈ {Math.round(minutesSavedToday/60*10)/10}h this week</div>
+              </div>
+              <div className="relative w-[72px] h-[72px] shrink-0">
+                <svg viewBox="0 0 72 72" className="-rotate-90 w-full h-full">
+                  <circle cx="36" cy="36" r={r} stroke="rgba(255,255,255,0.18)" strokeWidth="6" fill="none" />
+                  <circle cx="36" cy="36" r={r} stroke="var(--color-accent)" strokeWidth="6" fill="none" strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={off} style={{ transition: "stroke-dashoffset 800ms" }} />
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <div className="text-[14px] font-extrabold leading-none">{pct}%</div>
+                  <div className="text-[8px] opacity-70 uppercase tracking-wider mt-0.5">Goal</div>
                 </div>
               </div>
-              <div className="text-right">
-                <div className="text-[16px] font-bold" style={{ color: "var(--color-success)" }}>Save {place.savings} min</div>
-                <div className="text-[11px]" style={{ color: "var(--color-muted-foreground)" }}>{place.wait} min wait</div>
-              </div>
             </div>
-          ))}
-        </div>
-      </div>
+            <div className="mt-4 pt-4 border-t border-white/15 flex items-center justify-between text-[12px]">
+              <span className="opacity-80">{minutesSavedToday} / {goal} min goal</span>
+              <span className="font-semibold">{remaining === 0 ? "Goal achieved 🎉" : `${remaining} min to go`}</span>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Efficiency Score */}
       <div className="wl-card p-4 mb-4 flex items-center gap-4 wl-fade-up" style={{ animationDelay: "60ms" }}>
@@ -536,8 +1107,8 @@ function TodayScreen({ places, saved, toggleSave, openDetail, showToast, openPla
         {q && <button onClick={() => setQ("")} className="absolute right-4 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center" style={{ background: "var(--color-muted)" }}><X size={14} weight="bold" /></button>}
       </div>
 
-      {/* Categories */}
-      <div className="flex gap-2 overflow-x-auto no-scrollbar -mx-5 px-5 mb-5">
+      {/* Categories — sticky under header */}
+      <div className="sticky top-[112px] z-20 flex gap-2 overflow-x-auto no-scrollbar -mx-5 px-5 py-3 mb-3" style={{ background: "color-mix(in oklab, var(--color-background) 78%, transparent)", backdropFilter: "saturate(180%) blur(20px)" }}>
         {CATS.map(c => {
           const active = cat === c.key;
           return (
@@ -566,6 +1137,7 @@ function TodayScreen({ places, saved, toggleSave, openDetail, showToast, openPla
             <div className="text-[12px]" style={{ color: "var(--color-muted-foreground)" }}>Try a different search or category.</div>
           </div>
         )}
+      </div>
       </div>
     </div>
   );

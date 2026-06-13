@@ -5,9 +5,10 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-display: "Outfit", system-ui, sans-serif;
+  --font-display: "Inter", system-ui, sans-serif;
   --font-sans: "Inter", system-ui, sans-serif;
-  --font-serif: "Cormorant Garamond", Georgia, serif;
+  --font-serif: "DM Serif Display", Georgia, serif;
+  --font-mono: "Space Mono", ui-monospace, monospace;
   --radius-sm: 10px;
   --radius-md: 16px;
   --radius-lg: 20px;
@@ -41,28 +42,28 @@
 }
 
 :root {
-  --background: #F7F5EF;
-  --foreground: #111111;
+  --background: #F5F4EF;
+  --foreground: #1A1A1A;
   --card: #FFFFFF;
-  --card-foreground: #111111;
+  --card-foreground: #1A1A1A;
   --muted: #EFECE4;
-  --muted-foreground: #6B6B6B;
-  --border: #E6E2D7;
-  --primary: #111111;
+  --muted-foreground: #9CA3AF;
+  --border: #E5E3DC;
+  --primary: #1A1A1A;
   --primary-foreground: #FFFFFF;
-  --accent: #3B82F6;
+  --accent: #2563EB;
   --accent-foreground: #FFFFFF;
   --success: #22C55E;
   --warning: #F59E0B;
   --danger: #EF4444;
 
-  --q-free: #22C55E;
+  --q-free: #16A34A;
   --q-free-bg: #E8F6E9;
   --q-free-text: #14532D;
-  --q-medium: #F59E0B;
+  --q-medium: #D97706;
   --q-medium-bg: #FDF1DA;
   --q-medium-text: #7C4A03;
-  --q-busy: #EF4444;
+  --q-busy: #DC2626;
   --q-busy-bg: #FCE8E8;
   --q-busy-text: #7F1D1D;
 
@@ -95,7 +96,9 @@
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
   }
-  h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: -0.025em; }
+  h1, h2, h3, h4 { font-family: var(--font-sans); letter-spacing: -0.025em; }
+  .font-qpeek-serif { font-family: var(--font-serif); }
+  .font-qpeek-mono { font-family: var(--font-mono); }
   .serif-italic { font-family: var(--font-serif); font-style: italic; font-weight: 500; letter-spacing: -0.01em; }
 }
 

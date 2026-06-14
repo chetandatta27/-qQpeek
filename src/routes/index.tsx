@@ -813,7 +813,7 @@ function ProfileScreen({ savedCount, alertCount }: { savedCount: number; alertCo
           <ChartLineUp size={12} weight="fill" /> Lifetime impact
         </div>
         <div className="text-[44px] leading-none font-extrabold">14<span className="text-[16px] font-semibold opacity-70 ml-1">h</span> 22<span className="text-[16px] font-semibold opacity-70 ml-1">m</span></div>
-        <div className="text-[12px] opacity-70 mt-2">Total time you've saved with WaitLess</div>
+        <div className="text-[12px] opacity-70 mt-2">Total time you've saved with Qpeek</div>
         <div className="mt-4 pt-4 border-t border-white/15 grid grid-cols-3 gap-3">
           <div>
             <div className="text-[18px] font-bold leading-none">37</div>
@@ -953,7 +953,7 @@ function WeeklyReport({ onClose }: { onClose: () => void }) {
           {/* Share card */}
           <div className="wl-card p-5 mb-5" style={{ background: "var(--color-accent)", color: "white" }}>
             <div className="text-[10px] uppercase tracking-[0.18em] font-semibold opacity-80 mb-2">Share your impact</div>
-            <div className="text-[18px] font-bold leading-snug">"I saved 4h 21m this week using WaitLess."</div>
+            <div className="text-[18px] font-bold leading-snug">"I saved 4h 21m this week using Qpeek."</div>
             <div className="text-[11px] opacity-80 mt-2">Score 82 · Early Bird badge</div>
             <button className="mt-4 w-full h-12 rounded-xl text-[13px] font-semibold flex items-center justify-center gap-1.5" style={{ background: "white", color: "var(--color-accent)" }}>
               <ShareNetwork size={16} weight="bold" /> Share card

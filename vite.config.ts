@@ -5,7 +5,6 @@ import tsconfigPaths from "vite-tsconfig-paths";
 import path from "node:path";
 
 export default defineConfig({
-  base: process.env.NODE_ENV === "production" ? "/-qQpeek/" : "/",
   plugins: [react(), tailwindcss(), tsconfigPaths()],
   resolve: {
     alias: { "@": path.resolve(__dirname, "./src") },

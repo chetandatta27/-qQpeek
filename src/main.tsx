@@ -22,7 +22,7 @@ function NotFound() {
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter basename={process.env.NODE_ENV === "production" ? "/-qQpeek" : "/"}>
+      <BrowserRouter>
         <Routes>
           <Route path="/" element={<IndexPage />} />
           <Route path="*" element={<NotFound />} />

@@ -1,13 +1,11 @@
 import { AnimatePresence, motion } from "framer-motion";
 import type { ReactNode } from "react";
 import { useState } from "react";
-import { CaretLeft, Check, Hourglass, MapPin, Phone } from "@phosphor-icons/react";
+import { CaretLeft, Check, Hourglass, MapPin } from "@phosphor-icons/react";
 import { useOnboardingStore } from "@/stores/onboardingStore";
-import { AppleLogo, GoogleG, screenTransition, screenVariants } from "./ui";
+import { screenTransition, screenVariants } from "./ui";
 
 const TOTAL_STEPS = 5;
-
-type AuthMethod = "google" | "apple" | "phone";
 
 export function OnboardingFlow({ onDone }: { onDone: () => void }) {
   const reset = useOnboardingStore((s) => s.reset);
@@ -43,7 +41,7 @@ export function OnboardingFlow({ onDone }: { onDone: () => void }) {
           transition={screenTransition}
           className="flex-1 min-h-0 flex flex-col px-7 pb-7 overflow-hidden"
         >
-          {step === 0 && <WelcomeScreen onAuth={() => next()} />}
+          {step === 0 && <WelcomeScreen onContinue={() => next()} />}
           {step === 1 && (
             <InterestsScreen selected={selectedPlaces} toggle={togglePlace} onContinue={next} />
           )}
@@ -125,7 +123,7 @@ function PremiumButton({
   );
 }
 
-function WelcomeScreen({ onAuth }: { onAuth: (method: AuthMethod) => void }) {
+function WelcomeScreen({ onContinue }: { onContinue: () => void }) {
   const trust = [
     { value: "12k+", label: "Users" },
     { value: "94%", label: "Accuracy" },
@@ -152,12 +150,8 @@ function WelcomeScreen({ onAuth }: { onAuth: (method: AuthMethod) => void }) {
           ))}
         </div>
       </div>
-      <div className="space-y-3 pt-5">
-        <PremiumButton onClick={() => onAuth("google")}><GoogleG /> Continue with Google</PremiumButton>
-        <div className="grid grid-cols-2 gap-3">
-          <PremiumButton onClick={() => onAuth("apple")} variant="secondary"><AppleLogo /> Apple</PremiumButton>
-          <PremiumButton onClick={() => onAuth("phone")} variant="secondary"><Phone size={17} weight="regular" /> Phone</PremiumButton>
-        </div>
+      <div className="pt-5">
+        <PremiumButton onClick={onContinue}>Get Started</PremiumButton>
       </div>
     </div>
   );

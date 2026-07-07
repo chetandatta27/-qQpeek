@@ -1,4 +1,3 @@
-import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { OnboardingFlow } from "@/components/onboarding/OnboardingFlow";
 import {
@@ -12,7 +11,7 @@ import {
 
 const Activity = Pulse;
 
-export const Route = createFileRoute("/")({ component: App });
+export default function IndexPage() { return <App />; }
 
 /* ============================== DATA ============================== */
 type Trend = "up" | "down" | "stable";

@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { OnboardingFlow } from "@/components/onboarding/OnboardingFlow";
+import { LoginScreen } from "@/components/LoginScreen";
+import { useUserStore } from "@/stores/userStore";
 import {
   House, MapTrifold, Bell, BookmarkSimple, User,
   MagnifyingGlass, X, CaretLeft, CaretRight, MapPin, ArrowsClockwise,
   TrendUp, TrendDown, Minus, Heart, Phone, NavigationArrow, Check, Trash,
   Plus, Star, Clock, Sparkle, ShareNetwork, Pulse, Lightning,
   ClockCountdown, Path, Trophy, ShieldCheck, Users, Brain, Target,
-  Confetti, ChartLineUp, MapPinLine, Hourglass,
+  Confetti, ChartLineUp, MapPinLine, Hourglass, SignOut,
 } from "@phosphor-icons/react";
 
 const Activity = Pulse;
@@ -69,12 +71,14 @@ function TrendIcon({ t, className = "" }: { t: Trend; className?: string }) {
 }
 
 /* ============================== APP ============================== */
-type Stage = "splash" | "onboarding" | "loading" | "app";
+type Stage = "splash" | "login" | "onboarding" | "loading" | "app";
 type Tab = "today" | "map" | "alerts" | "saved" | "profile";
 
 function App() {
   const [stage, setStage] = useState<Stage>("splash");
-  
+  const isLoggedIn = useUserStore((state) => state.isLoggedIn);
+  const logout = useUserStore((state) => state.logout);
+
   const [tab, setTab] = useState<Tab>("today");
   const [places, setPlaces] = useState<Place[]>(SEED);
   const [saved, setSaved] = useState<Set<string>>(new Set(["p3", "p4"]));
@@ -87,9 +91,15 @@ function App() {
   const [plannerOpen, setPlannerOpen] = useState(false);
 
   useEffect(() => {
-    const t1 = setTimeout(() => setStage("onboarding"), 1700);
+    const t1 = setTimeout(() => {
+      if (isLoggedIn) {
+        setStage("app");
+      } else {
+        setStage("login");
+      }
+    }, 1700);
     return () => clearTimeout(t1);
-  }, []);
+  }, [isLoggedIn]);
 
   useEffect(() => {
     const i = setInterval(() => {
@@ -114,6 +124,9 @@ function App() {
     <div className="min-h-screen w-full flex items-stretch justify-center" style={{ background: "#0B0B0B" }}>
       <div className="relative w-full max-w-[430px] min-h-screen overflow-hidden" style={{ background: "var(--color-background)" }}>
         {stage === "splash" && <Splash />}
+        {stage === "login" && (
+          <LoginScreen onLogin={() => setStage("onboarding")} />
+        )}
         {stage === "onboarding" && (
           <OnboardingFlow onDone={() => setStage("loading")} />
         )}
@@ -127,7 +140,7 @@ function App() {
               {tab === "map" && <MapScreen places={places} openDetail={setDetail} />}
               {tab === "alerts" && <AlertsScreen alerts={alerts} places={places} setAlerts={setAlerts} openDetail={setDetail} switchTab={setTab} showToast={showToast} />}
               {tab === "saved" && <SavedScreen places={places} saved={saved} toggleSave={toggleSave} openDetail={setDetail} switchTab={setTab} />}
-              {tab === "profile" && <ProfileScreen savedCount={saved.size} alertCount={alerts.length} />}
+              {tab === "profile" && <ProfileScreen savedCount={saved.size} alertCount={alerts.length} onLogout={logout} />}
             </div>
             {tab === "today" && (
               <button onClick={() => setPlannerOpen(true)} className="fixed bottom-[100px] left-1/2 -translate-x-1/2 z-40 px-5 h-12 rounded-full text-[13px] font-semibold inline-flex items-center gap-2 wl-shadow-lg wl-fade-up" style={{ background: "var(--color-accent)", color: "white" }}>
@@ -773,7 +786,8 @@ function SavedScreen({ places, saved, toggleSave, openDetail, switchTab }: {
 }
 
 /* ============================ PROFILE ============================ */
-function ProfileScreen({ savedCount, alertCount }: { savedCount: number; alertCount: number }) {
+function ProfileScreen({ savedCount, alertCount, onLogout }: { savedCount: number; alertCount: number; onLogout: () => void }) {
+  const userName = useUserStore((state) => state.userName);
   const badges = [
     { Icon: Lightning, t: "Early Bird", earned: true },
     { Icon: Brain, t: "Smart Planner", earned: true },
@@ -786,6 +800,8 @@ function ProfileScreen({ savedCount, alertCount }: { savedCount: number; alertCo
   // suppress unused warnings
   void savedCount; void alertCount;
 
+  const initials = userName ? userName.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) : "??";
+
   return (
     <div className="px-5 pt-12">
       <div className="text-[26px] font-bold leading-tight">Profile</div>
@@ -793,9 +809,9 @@ function ProfileScreen({ savedCount, alertCount }: { savedCount: number; alertCo
 
       {/* Identity */}
       <div className="wl-card p-5 mb-5 flex items-center gap-4">
-        <div className="w-14 h-14 rounded-full flex items-center justify-center text-[20px] font-bold" style={{ background: "var(--color-primary)", color: "var(--color-primary-foreground)" }}>RA</div>
+        <div className="w-14 h-14 rounded-full flex items-center justify-center text-[20px] font-bold" style={{ background: "var(--color-primary)", color: "var(--color-primary-foreground)" }}>{initials}</div>
         <div className="flex-1">
-          <div className="text-[16px] font-semibold">Ravi A.</div>
+          <div className="text-[16px] font-semibold">{userName || "Guest"}</div>
           <div className="text-[12px] flex items-center gap-1.5" style={{ color: "var(--color-muted-foreground)" }}>
             <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-semibold" style={{ background: "var(--color-muted)", color: "var(--color-foreground)" }}>
               <Trophy size={10} weight="fill" /> Time Saver
@@ -803,7 +819,9 @@ function ProfileScreen({ savedCount, alertCount }: { savedCount: number; alertCo
             Rank #248
           </div>
         </div>
-        <CaretRight size={18} weight="bold" style={{ color: "var(--color-muted-foreground)" }} />
+        <button onClick={onLogout} className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: "var(--color-muted)" }}>
+          <SignOut size={18} weight="bold" style={{ color: "var(--color-muted-foreground)" }} />
+        </button>
       </div>
 
       {/* Lifetime Impact hero */}

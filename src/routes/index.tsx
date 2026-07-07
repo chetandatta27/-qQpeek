@@ -77,7 +77,9 @@ type Tab = "today" | "map" | "alerts" | "saved" | "profile";
 function App() {
   const [stage, setStage] = useState<Stage>("splash");
   const isLoggedIn = useUserStore((state) => state.isLoggedIn);
+  const hasCompletedOnboarding = useUserStore((state) => state.hasCompletedOnboarding);
   const logout = useUserStore((state) => state.logout);
+  const completeOnboarding = useUserStore((state) => state.completeOnboarding);
 
   const [tab, setTab] = useState<Tab>("today");
   const [places, setPlaces] = useState<Place[]>(SEED);
@@ -92,14 +94,16 @@ function App() {
 
   useEffect(() => {
     const t1 = setTimeout(() => {
-      if (isLoggedIn) {
+      if (!isLoggedIn) {
+        setStage("login");
+      } else if (hasCompletedOnboarding) {
         setStage("app");
       } else {
-        setStage("login");
+        setStage("onboarding");
       }
     }, 1700);
     return () => clearTimeout(t1);
-  }, [isLoggedIn]);
+  }, [isLoggedIn, hasCompletedOnboarding]);
 
   useEffect(() => {
     const i = setInterval(() => {
@@ -125,10 +129,10 @@ function App() {
       <div className="relative w-full max-w-[430px] min-h-screen overflow-hidden" style={{ background: "var(--color-background)" }}>
         {stage === "splash" && <Splash />}
         {stage === "login" && (
-          <LoginScreen onLogin={() => setStage("onboarding")} />
+          <LoginScreen onLogin={() => {}} />
         )}
         {stage === "onboarding" && (
-          <OnboardingFlow onDone={() => setStage("loading")} />
+          <OnboardingFlow onDone={() => { completeOnboarding(); setStage("loading"); }} />
         )}
         {stage === "loading" && (
           <LoadingScreen onDone={() => setStage("app")} />
